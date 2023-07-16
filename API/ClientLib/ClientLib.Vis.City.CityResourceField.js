@@ -1,0 +1,2 @@
+[object prototypeObject]
+function CityResourceFieldType() {}

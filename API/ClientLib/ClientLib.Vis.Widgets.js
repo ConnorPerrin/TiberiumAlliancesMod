@@ -1,0 +1,3 @@
+function EHealthBarStyle() {}
+
+function EHealthBarType() {}

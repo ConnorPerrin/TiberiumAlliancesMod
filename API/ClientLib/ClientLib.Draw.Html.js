@@ -1,0 +1,3 @@
+function ImageCache() {}
+
+function CursorCache() {}

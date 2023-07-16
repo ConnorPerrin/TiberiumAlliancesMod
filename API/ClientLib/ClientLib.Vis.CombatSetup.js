@@ -1,0 +1,3 @@
+function CombatSetupViewMode() {}
+
+function CombatSetup() {}

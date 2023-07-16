@@ -1,0 +1,22 @@
+function Reset() {
+    this.Id = 0;
+    this.Name = "";
+    this.IsDefaultName = !0;
+    this.IsAdmin = !1;
+    this.IsOfficer = !1;
+    this.CanInvite = !1;
+    this.CanKick = !1;
+    this.CanCreateForum = !1;
+    this.CanEditRights = !1;
+    this.CanModerate = !1;
+    this.CanRepresent = !1;
+    this.CanPromoteLowerRoles = !1;
+    this.CanViewMemberReports = !1;
+    this.CanTrackOutgoingAttacks = !1;
+    this.CanSetForumSubscriptions = !1;
+    this.CanAccessSharedForums = !1;
+    this.CanRecruit = !1;
+    this.CanEditMarkers = !1;
+    this.CanViewMilitary = !1;
+    this.SortOrder = 0
+}
