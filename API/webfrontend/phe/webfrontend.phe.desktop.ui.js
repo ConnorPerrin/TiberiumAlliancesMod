@@ -1,0 +1,1 @@
+[Class w SvgImageebfrontend.phe.desktop.ui.SvgImage]

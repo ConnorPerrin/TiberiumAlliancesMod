@@ -1,0 +1,1 @@
+webfront prototypeend.gui.PlayArea.PlayAreaBattlegroundInfo[17356 - 0]

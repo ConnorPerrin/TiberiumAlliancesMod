@@ -1,0 +1,1 @@
+webfront prototypeend.gui.alliance.InvitationsContainer[16502 - 0]

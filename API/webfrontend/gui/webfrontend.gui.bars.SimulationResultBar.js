@@ -1,0 +1,1 @@
+webfront prototypeend.gui.bars.SimulationResultBar[16701 - 0]

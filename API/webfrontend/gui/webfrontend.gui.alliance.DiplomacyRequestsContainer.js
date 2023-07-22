@@ -1,0 +1,1 @@
+webfront prototypeend.gui.alliance.DiplomacyRequestsContainer[16524 - 0]

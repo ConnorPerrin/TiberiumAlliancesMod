@@ -1,0 +1,1 @@
+webfront prototypeend.gui.widgets.QuickBuyButton[14702 - 0]

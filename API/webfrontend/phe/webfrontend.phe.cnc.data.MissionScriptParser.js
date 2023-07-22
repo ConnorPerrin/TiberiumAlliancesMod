@@ -1,0 +1,1 @@
+webfront prototypeend.phe.cnc.data.MissionScriptParser[15180 - 0][object markerDirectionObject]

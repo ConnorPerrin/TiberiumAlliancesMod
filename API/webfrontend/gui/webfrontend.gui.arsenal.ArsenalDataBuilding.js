@@ -1,0 +1,1 @@
+webfront prototypeend.gui.arsenal.ArsenalDataBuilding[18211 - 0]

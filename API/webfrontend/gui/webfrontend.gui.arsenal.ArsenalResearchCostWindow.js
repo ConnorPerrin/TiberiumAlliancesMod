@@ -1,0 +1,1 @@
+webfront prototypeend.gui.arsenal.ArsenalResearchCostWindow[18202 - 0]

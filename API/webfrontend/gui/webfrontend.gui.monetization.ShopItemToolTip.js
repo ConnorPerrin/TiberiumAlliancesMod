@@ -1,0 +1,1 @@
+webfront prototypeend.gui.monetization.ShopItemToolTip[15208 - 0]

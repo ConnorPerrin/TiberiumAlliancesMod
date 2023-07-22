@@ -1,0 +1,1 @@
+webfront prototypeend.gui.widgets.confirmationWidgets.AlliedAttackConfirmationWidget[14705 - 0]

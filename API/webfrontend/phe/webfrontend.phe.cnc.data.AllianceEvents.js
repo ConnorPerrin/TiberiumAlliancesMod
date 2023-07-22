@@ -1,0 +1,1 @@
+webfront prototypeend.phe.cnc.data.AllianceEvents[15180 - 0]

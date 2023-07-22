@@ -1,0 +1,1 @@
+webfront prototypeend.gui.widgets.confirmationWidgets.BuyLowerRankItemConfirmationWidget[14705 - 0]

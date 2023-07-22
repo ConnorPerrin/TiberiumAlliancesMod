@@ -1,0 +1,1 @@
+webfront prototypeend.gui.widgets.confirmationWidgets.AllianceMarkerConfirmationWidget[14713 - 0]

@@ -1,0 +1,1 @@
+webfront prototypeend.gui.widgets.CoordinatesLabel[14737 - 0]

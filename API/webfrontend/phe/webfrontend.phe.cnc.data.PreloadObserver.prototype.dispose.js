@@ -1,0 +1,1 @@
+[object prototypeObject][Class q selfx.core.Object]

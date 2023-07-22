@@ -1,0 +1,1 @@
+webfront prototypeend.gui.details.OverlayBuildingDetailView[17478 - 0]

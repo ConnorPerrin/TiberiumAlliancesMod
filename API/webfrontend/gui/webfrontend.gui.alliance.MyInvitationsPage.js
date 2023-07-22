@@ -1,0 +1,1 @@
+webfront prototypeend.gui.alliance.MyInvitationsPage[16527 - 0]

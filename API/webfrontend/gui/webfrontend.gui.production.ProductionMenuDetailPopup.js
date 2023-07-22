@@ -1,0 +1,1 @@
+webfront prototypeend.gui.production.ProductionMenuDetailPopup[18020 - 0][object typeObject]

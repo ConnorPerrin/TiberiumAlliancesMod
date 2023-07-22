@@ -1,0 +1,1 @@
+webfront prototypeend.gui.alliance.DiplomacyPage[16518 - 0]

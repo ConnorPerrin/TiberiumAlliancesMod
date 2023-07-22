@@ -1,0 +1,1 @@
+webfront prototypeend.gui.widgets.confirmationWidgets.MoveBuildingConfirmationWidget[14705 - 0]

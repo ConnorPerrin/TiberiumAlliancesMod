@@ -1,0 +1,1 @@
+webfront prototypeend.gui.widgets.SpinnerInt[14911 - 0]

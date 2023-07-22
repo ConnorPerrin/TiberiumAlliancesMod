@@ -1,0 +1,1 @@
+webfront prototypeend.gui.alliance.MemberRightsWindow[15752 - 0]

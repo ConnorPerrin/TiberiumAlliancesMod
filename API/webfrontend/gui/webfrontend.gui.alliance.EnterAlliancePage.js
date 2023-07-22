@@ -1,0 +1,1 @@
+webfront prototypeend.gui.alliance.EnterAlliancePage[16479 - 0]

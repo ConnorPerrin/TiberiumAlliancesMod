@@ -1,0 +1,1 @@
+[object prototypeObject][Class w selfebfrontend.phe.cnc.config.Config]
