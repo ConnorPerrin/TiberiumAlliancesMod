@@ -1,0 +1,1 @@
+[Class q animationx.phe.AnimationDescription][object styleObject]

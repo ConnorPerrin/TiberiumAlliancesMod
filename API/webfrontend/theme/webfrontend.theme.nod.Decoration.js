@@ -1,0 +1,1 @@
+[Theme w superthemeebfrontend.theme.gdi.Decoration][object decorationsObject][object aliasesObject]

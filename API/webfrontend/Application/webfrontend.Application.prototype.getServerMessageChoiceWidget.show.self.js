@@ -1,0 +1,1 @@
+webfront prototypeend.gui.info.ServerMessageChoiceWindow[20563 - 0]

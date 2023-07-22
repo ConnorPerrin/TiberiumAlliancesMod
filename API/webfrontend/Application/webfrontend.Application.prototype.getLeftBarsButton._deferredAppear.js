@@ -1,0 +1,1 @@
+[object prototypeObject][Class w selfebfrontend.gui.widgets.ShowMenuButton]
