@@ -42,6 +42,10 @@
                     this.__supportWeaponLevel = null;
                     this.__offensiveLevel = null;
                     this.__defensiveLevel = null;
+                    this.__baseLevel = null;
+                    this.__commandCenterLevel = null;
+                    this.__constructionYardLevel = null;
+                    this.__isProtected = null;
                     this.__baseLayout = null;
                 }
             
@@ -71,6 +75,10 @@
                 set SupportWeaponLevel(value) { this.__supportWeaponLevel = value; }
                 set OffensiveLevel(value) { this.__offensiveLevel = value; }
                 set DefensiveLevel(value) { this.__defensiveLevel = value; }
+                set BaseLevel(value) { this.__baseLevel = value; }
+                set CommandCenterLevel(value) { this.__commandCenterLevel = value; }
+                set ConstructionYardLevel(value) { this.__constructionYardLevel = value; }
+                set IsProtected(value) { this.__isProtected = value; }
                 set BaseLayout(value) { this.__baseLayout = value; }
             
                 // Getters
@@ -99,6 +107,10 @@
                 get SupportWeaponLevel() { return this.__supportWeaponLevel; }
                 get OffensiveLevel() { return this.__offensiveLevel; }
                 get DefensiveLevel() { return this.__defensiveLevel; }
+                get BaseLevel() { return this.__baseLevel; }
+                get CommandCenterLevel() { return this.__commandCenterLevel; }
+                get ConstructionYardLevel() { return this.__constructionYardLevel; }
+                get IsProtected() { return this.__isProtected; }
                 get BaseLayout() { return this.__baseLayout; }
             }
             
@@ -279,6 +291,9 @@
                                 "Support Weapon Level", 
                                 "Offensive Level", 
                                 "Defensive Level", 
+                                "Base Level",
+                                "Command Center Level",
+                                "Construction Yard Level",
                                 "Base Layout"
                             ]);                            
                             this._baseTable.setTableModel(this._baseTableModel);
@@ -466,7 +481,7 @@
                         
                             // Fetch player info
                             // return this.getPlayerInfo(player.Name).then(() => {
-                            return this.getPlayerInfo("LUTCHENKO33").then(() => {
+                            return this.getPlayerInfo("CraigJuanez").then(() => {
                                 // Once the player info is fetched, call the next one
                                 return this.fetchPlayerDataSequentially(playerIds, currentIndex + 1);
                             });
@@ -555,13 +570,7 @@
                                                         setTimeout(checkTiberiumStorage, 2000);
                                                     } else {
                                                         // Base is valid, resolve the promise
-                                                        console.log(scanBase);
-                                                        console.log("GetResourceBonusGrowPerHour: ", scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.RepairChargeAir))
-                                                        console.log("GetResourceGrowPerHour: ", scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.RepairChargeAir))
-                                                        
-                                                        // Locate the factory build, then look for GetQuickDisplayEndingLocaByModifierType
-                                                        // RepairEfficiencyAir could be good to look into
-                                                        console.log("get_Buildings: ", scanBase.get_Buildings());
+                                                        console.log(scanBase);       
 
                                                         // City repair time
                                                         // 1 = next level, 0 = current level
@@ -589,6 +598,17 @@
                                                         base.FactoryRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Vehicle, null);
                                                         base.BarracksRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Aircraft, null);
                                                         
+                                                        base.SupportWeapon = scanBase.get_SupportWeapon().dn;
+                                                        base.SupportWeaponLevel = scanBase.get_SupportData().get_Level();
+
+                                                        base.OffensiveLevel = scanBase.get_LvlOffense();
+                                                        base.DefensiveLevel = scanBase.get_LvlDefense();
+                                                        base.BaseLevel = scanBase.get_LvlBase();
+                                                        base.CommandCenterLevel = scanBase.get_CommandCenterLevel();
+                                                        base.ConstructionYardLevel = scanBase.get_CommandCenterLevel();
+
+                                                        base.IsProtected = scanBase.get_isProtected();
+
                                                         resolve();  // Notify that the base scanning is done
                                                     }
                                                 }
@@ -632,6 +652,8 @@
                                                     base.SupportWeaponLevel, 
                                                     base.OffensiveLevel, 
                                                     base.DefensiveLevel, 
+                                                    base.BaseLevel,
+                                                    base.CommandCenterLevel,
                                                     base.BaseLayout
                                                 ]
                                             ]);                                            
