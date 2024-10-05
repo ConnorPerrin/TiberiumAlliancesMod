@@ -556,14 +556,19 @@
                                                     } else {
                                                         // Base is valid, resolve the promise
                                                         console.log(scanBase);
-                                                        console.log("Base Name: ", base.Name, " || TibTest: ", tibTest);
-                                                        console.log("GetResourceCount: ",  scanBase.GetResourceCount(ClientLib.Base.EResourceType.Tiberium));
-                                                        console.log("GetResourceData: ",  scanBase.GetResourceData(ClientLib.Base.EResourceType.Tiberium));
-                                                        console.log("GetResourceBonusGrowPerHour: ",  scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Tiberium));
-                                                        console.log("GetResourceStorageFullStep: ",  scanBase.GetResourceStorageFullStep(ClientLib.Base.EResourceType.Tiberium));
+                                                        console.log("GetResourceBonusGrowPerHour: ", scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.RepairChargeAir))
+                                                        console.log("GetResourceGrowPerHour: ", scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.RepairChargeAir))
                                                         
+                                                        // Locate the factory build, then look for GetQuickDisplayEndingLocaByModifierType
+                                                        // RepairEfficiencyAir could be good to look into
+                                                        console.log("get_Buildings: ", scanBase.get_Buildings());
+
+                                                        // City repair time
+                                                        // 1 = next level, 0 = current level
+                                                        // scanBase.get_CityBuildingsData().GetFullRepairTime(1);
+                                                        // scanBase.get_CityBuildingsData().GetFullRepairTime(0);
                                                         
-                                                        
+
                                                         base.Faction = scanBase.get_CityFaction();
 
                                                         base.TiberiumMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Tiberium);
@@ -573,11 +578,16 @@
                                                         base.TiberiumPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Tiberium);
                                                         base.CrystalPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Crystal);
                                                         base.PowerPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Power);
+                                                        base.CreditPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Gold);
 
-                                                        base.AirfieldRepairTime = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.RepairChargeAir);
-                                                        base.FactoryRepairTime = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.RepairChargeVeh);
-                                                        base.BarracksRepairTime = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.RepairChargeInf);
-                                                        
+                                                        base.TiberiumContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Tiberium, !1, !1);
+                                                        base.CrystalContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Crystal, !1, !1);
+                                                        base.PowerContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Power, !1, !1);
+                                                        base.CreditContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Gold, !1, !1);
+
+                                                        base.AirfieldRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Infantry, null);
+                                                        base.FactoryRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Vehicle, null);
+                                                        base.BarracksRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Aircraft, null);
                                                         
                                                         resolve();  // Notify that the base scanning is done
                                                     }
@@ -599,8 +609,32 @@
                                         testBase(base).then(() => {
                                             console.log("Adding base data: " , base.Name);
                                             this.addBaseData([
-                                                [base.Owner, base.Name, base.Score]
-                                            ])
+                                                [
+                                                    base.Owner, 
+                                                    base.Name, 
+                                                    base.Score, 
+                                                    base.Faction, 
+                                                    base.TiberiumPackage, 
+                                                    base.TiberiumContinuous, 
+                                                    base.TiberiumMaxStorage, 
+                                                    base.CrystalPackage, 
+                                                    base.CrystalContinuous, 
+                                                    base.CrystalMaxStorage, 
+                                                    base.PowerPackage, 
+                                                    base.PowerContinuous, 
+                                                    base.PowerMaxStorage, 
+                                                    base.CreditPackage, 
+                                                    base.CreditContinuous, 
+                                                    base.FactoryRepairTime, 
+                                                    base.AirfieldRepairTime, 
+                                                    base.BarracksRepairTime, 
+                                                    base.SupportWeapon, 
+                                                    base.SupportWeaponLevel, 
+                                                    base.OffensiveLevel, 
+                                                    base.DefensiveLevel, 
+                                                    base.BaseLayout
+                                                ]
+                                            ]);                                            
                                             
                                         }).catch(error => {
                                             console.error("Error processing base:", base.Name, error);
