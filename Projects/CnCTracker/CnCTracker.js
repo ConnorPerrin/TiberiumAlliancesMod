@@ -43,8 +43,8 @@
                     this.__offensiveLevel = null;
                     this.__defensiveLevel = null;
                     this.__baseLevel = null;
-                    this.__commandCenterLevel = null;
-                    this.__constructionYardLevel = null;
+                    this.__numBuildings = null;
+                    this.__numUnitLimitOffense = null;
                     this.__isProtected = null;
                     this.__baseLayout = null;
                 }
@@ -76,8 +76,8 @@
                 set OffensiveLevel(value) { this.__offensiveLevel = value; }
                 set DefensiveLevel(value) { this.__defensiveLevel = value; }
                 set BaseLevel(value) { this.__baseLevel = value; }
-                set CommandCenterLevel(value) { this.__commandCenterLevel = value; }
-                set ConstructionYardLevel(value) { this.__constructionYardLevel = value; }
+                set NumBuildings(value) { this.__numBuildings = value; }
+                set NumUnitLimitOffense(value) { this.__numUnitLimitOffense = value; }
                 set IsProtected(value) { this.__isProtected = value; }
                 set BaseLayout(value) { this.__baseLayout = value; }
             
@@ -108,8 +108,8 @@
                 get OffensiveLevel() { return this.__offensiveLevel; }
                 get DefensiveLevel() { return this.__defensiveLevel; }
                 get BaseLevel() { return this.__baseLevel; }
-                get CommandCenterLevel() { return this.__commandCenterLevel; }
-                get ConstructionYardLevel() { return this.__constructionYardLevel; }
+                get NumBuildings() { return this.__numBuildings; }
+                get NumUnitLimitOffense() { return this.__numUnitLimitOffense; }
                 get IsProtected() { return this.__isProtected; }
                 get BaseLayout() { return this.__baseLayout; }
             }
@@ -123,6 +123,7 @@
                     this.__AvgDefenseLvl = null;
                     this.__AvgOffenseLvl = null;
                     this.__NumBases = null;
+                    this.__NumBasesDestroyed = null;
                     this.__BestDefenseLvl = null;
                     this.__BestOffenseLvl = null;
                     this.__Faction = null;
@@ -145,6 +146,7 @@
                 set AvgDefenseLvl(value) { this.__AvgDefenseLvl = value; }
                 set AvgOffenseLvl(value) { this.__AvgOffenseLvl = value; }
                 set NumBases(value) { this.__NumBases = value; }
+                set NumBasesDestroyed(value) { this.__NumBasesDestroyed = value; }
                 set BestDefenseLvl(value) { this.__BestDefenseLvl = value; }
                 set BestOffenseLvl(value) { this.__BestOffenseLvl = value; }
                 set Faction(value) { this.__Faction = value; }
@@ -185,7 +187,8 @@
                 // Getters
                 get AvgDefenseLvl() { return this.__AvgDefenseLvl; }
                 get AvgOffenseLvl() { return this.__AvgOffenseLvl; }
-                get Bases() { return this.__Bases; }
+                get NumBases() { return this.__NumBases; }
+                get NumBasesDestroyed() { return this.__NumBasesDestroyed; }
                 get BestDefenseLvl() { return this.__BestDefenseLvl; }
                 get BestOffenseLvl() { return this.__BestOffenseLvl; }
                 get Faction() { return this.FactionToName(this.__Faction); }
@@ -261,7 +264,13 @@
                             this._playerTable = new qx.ui.table.Table();
                             this._playerTableModel = new qx.ui.table.model.Simple();
                             this._playerTableModel.setColumns([
-                            "Rank", "Name", "Faction", "Bases", "Best Defense Level", "Best Offense Level"
+                                "Rank", 
+                                "Name", 
+                                "Faction", 
+                                "Bases", 
+                                "Bases Destoryed",                                
+                                "Best Offense Level", 
+                                "Best Defense Level"
                             ]);
                             this._playerTable.setTableModel(this._playerTableModel);
                     
@@ -292,8 +301,8 @@
                                 "Offensive Level", 
                                 "Defensive Level", 
                                 "Base Level",
-                                "Command Center Level",
-                                "Construction Yard Level",
+                                "Number of Buildings",
+                                "Number of Offensive Units",
                                 "Base Layout"
                             ]);                            
                             this._baseTable.setTableModel(this._baseTableModel);
@@ -319,8 +328,34 @@
                         },
                     
                         // Add data to the Player Table and redraw
-                        addPlayerData: function() {
-                            this.getPlayers();
+                        addPlayerData: async function() {
+                            // Wait for getPlayers to complete
+                            await this.getPlayers();
+                        
+                            // Use a traditional for-loop to iterate through the players map or object
+                            for (let id in this._players) {
+                                if (this._players.hasOwnProperty(id)) {  // Ensure the property is a player's property
+                                    let player = this._players[id];
+                        
+                                    // Push the player's data into the tableData array
+                                    this._playerTableData.push([
+                                        player.Rank,
+                                        player.Name,
+                                        player.Faction,
+                                        player.NumBases,
+                                        player.NumBasesDestroyed,
+                                        player.BestOffenseLvl,
+                                        player.BestDefenseLvl,
+                                    ]);
+                                }
+                            }
+                        
+                            this.drawTables();  // Redraw the tables
+                        },                        
+
+                        // Add data to the Player Table and redraw
+                        updatePlayerData: function() {
+                            this._playerTableData = [];
 
                             // Use a traditional for-loop to iterate through the players map or object
                             for (let id in this._players) {
@@ -332,9 +367,10 @@
                                         player.Rank,
                                         player.Name,
                                         player.Faction,
-                                        player.Bases,
-                                        player.BestDefenseLvl,
+                                        player.NumBases,
+                                        player.NumBasesDestroyed,
                                         player.BestOffenseLvl,
+                                        player.BestDefenseLvl,
                                     ]);
                                 }
                             }
@@ -428,9 +464,25 @@
                         
 
                         // PLAYER INFO
-                        getPlayers: function() {
+                        getPlayers: async function() {
                             let members = ClientLib.Data.MainData.GetInstance().get_Alliance().get_MemberDataAsArray();
-            
+                        
+                            // A function to wrap the asynchronous command
+                            const getPublicPlayerInfo = async (playerName) => {
+                                return new Promise((resolve, reject) => {
+                                    let ao = "GetPublicPlayerInfoByName";
+                                    ClientLib.Net.CommunicationManager.GetInstance().SendSimpleCommand(ao, {
+                                        name: playerName,
+                                    }, webfrontend.phe.cnc.Util.createEventDelegate(ClientLib.Net.CommandResult, null, function(u, f) {
+                                        if (f && f.bd) {
+                                            resolve(f.bd);  // Resolve the promise with the data
+                                        } else {
+                                            reject("Failed to retrieve player data");
+                                        }
+                                    }));
+                                });
+                            };
+                        
                             for (let member of members) {
                                 let player = new Player();
                                 player.AvgDefenseLvl = member["AvgDefenseLvl"];
@@ -451,10 +503,18 @@
                                 player.Role = member["Role"];
                                 player.RoleName = member["RoleName"];
                                 player.VeteranPointContribution = member["VeteranPointContribution"];
-            
                                 this._players[member["Name"]] = player;
+                        
+                                try {
+                                    let publicPlayerData = await getPublicPlayerInfo(player.Name);
+                                    console.log("Name: ", player.Name, " || Bd: ", publicPlayerData);
+                                    this._players[player.Name].NumBasesDestroyed = publicPlayerData;  // Update player data with the fetched info
+                                } catch (error) {
+                                    console.error(`Failed to fetch data for player ${player.Name}: ${error}`);
+                                }
                             }
                         },
+                        
 
                         //BASE INFO
                         getBases: function() {
@@ -475,37 +535,40 @@
                             if (currentIndex >= playerIds.length) {
                                 return Promise.resolve();
                             }
-                        
+
                             // Get the current player
                             let player = this._players[playerIds[currentIndex]];
-                        
+                            
                             // Fetch player info
-                            // return this.getPlayerInfo(player.Name).then(() => {
-                            return this.getPlayerInfo("CraigJuanez").then(() => {
+                            return this.getPlayerInfo(player.Name).then(() => {
                                 // Once the player info is fetched, call the next one
-                                return this.fetchPlayerDataSequentially(playerIds, currentIndex + 1);
+                                // return this.fetchPlayerDataSequentially(playerIds, currentIndex + 1);
+                            }).catch(error => {
+                                console.error("Error fetching player info:", error);
+                                // return this.fetchPlayerDataSequentially(playerIds, currentIndex + 1);  // Continue even on error
                             });
                         },
-                        
-            
+
                         getPlayerInfo: function(playerName) {
                             return new Promise((resolve, reject) => {
                                 try {
                                     let ao = "GetPublicPlayerInfoByName";  // Corrected command
                                     let n = playerName;  // The player name you're querying
                                     console.log("Sending command:", ao, "with playerName:", n);
-                        
+
                                     // Send the command with an inline event delegate
                                     ClientLib.Net.CommunicationManager.GetInstance().SendSimpleCommand(ao, {
                                         name: n,
                                     }, webfrontend.phe.cnc.Util.createEventDelegate(ClientLib.Net.CommandResult, null, function(u, f) {
-                        
+
+                                        console.log(f);
+
                                         // Ensure the player exists in the players object before adding bases
                                         if (!this._players[n]) {
                                             this._players[n] = new Player();
                                         }
-                        
-                                        // Use arrow function here to maintain context
+
+                                        // Process bases in sequence
                                         let baseQueue = f.c.map(item => {
                                             let base = new Base();
                                             base.Owner = n;
@@ -514,33 +577,62 @@
                                             base.Score = item.p;
                                             base.X = item.x;
                                             base.Y = item.y;
-                        
+
                                             if (this._players.has(n)) {
                                                 this._players.get(n).addBase(base);
                                             }
-                        
+
                                             return base;
                                         });
-                    
-                                        // Recursive function to process each base sequentially
+
                                         const processBasesSequentially = (index) => {
                                             if (index >= baseQueue.length) {
                                                 console.log("All bases processed for player:", playerName);
-                                                return resolve();  // All bases processed, resolve the promise
+                                                return resolve();  // All bases processed, resolve the promise here
                                             }
-
+                                        
                                             let base = baseQueue[index];
-
+                                        
                                             // Call testBase for the current base
                                             testBase(base).then(() => {
-                                                console.log("Adding base data: " , base.Name);
+                                                console.log("Adding base data:", base.Name);
                                                 this.addBaseData([
-                                                    [base.Owner, base.Name, base.Score]
-                                                ])
+                                                    [
+                                                        base.Owner, 
+                                                        base.Name, 
+                                                        base.Score, 
+                                                        base.Faction, 
+                                                        base.TiberiumPackage, 
+                                                        base.TiberiumContinuous, 
+                                                        base.TiberiumMaxStorage, 
+                                                        base.CrystalPackage, 
+                                                        base.CrystalContinuous, 
+                                                        base.CrystalMaxStorage, 
+                                                        base.PowerPackage, 
+                                                        base.PowerContinuous, 
+                                                        base.PowerMaxStorage, 
+                                                        base.CreditPackage, 
+                                                        base.CreditContinuous, 
+                                                        base.FactoryRepairTime, 
+                                                        base.AirfieldRepairTime, 
+                                                        base.BarracksRepairTime, 
+                                                        base.SupportWeapon, 
+                                                        base.SupportWeaponLevel, 
+                                                        base.OffensiveLevel, 
+                                                        base.DefensiveLevel, 
+                                                        base.BaseLevel,
+                                                        base.NumBuildings,
+                                                        base.NumUnitLimitOffense,
+                                                        base.BaseLayout
+                                                    ]
+                                                ]);
+
+                                                // After processing the current base, move to the next one
                                                 processBasesSequentially(index + 1);
+
                                             }).catch(error => {
                                                 console.error("Error processing base:", base.Name, error);
-                                                processBasesSequentially(index + 1);
+                                                processBasesSequentially(index + 1);  // Proceed to next base even in case of error
                                             });
                                         };
 
@@ -554,32 +646,32 @@
                                                 var scanBase = ClientLib.Data.MainData.GetInstance().get_Cities().GetCity(base.Id);
                                                 var comm = ClientLib.Net.CommunicationManager.GetInstance();
                                                 comm.UserAction();
-                                        
+
                                                 // If base was destroyed, resolve immediately
                                                 if (scanBase.get_IsGhostMode()) {
                                                     console.log("Base destroyed.");
                                                     return resolve();  // Continue to the next base
                                                 }
-                                        
-                                                // Now check Tiberium storage
+
+                                                // Retry mechanism for checking Tiberium storage with a retry limit
+                                                let retryCount = 0;
+                                                let maxRetries = 25;  // Set a retry limit
+
                                                 function checkTiberiumStorage() {
                                                     var tibTest = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Tiberium);
-                                        
-                                                    if (tibTest === 0) {
-                                                        // Retry after 2 seconds if tibTest is still zero
-                                                        setTimeout(checkTiberiumStorage, 2000);
+
+                                                    if (tibTest === 0 && retryCount < maxRetries) {
+                                                        // Retry after 2 seconds if tibTest is still zero, up to maxRetries
+                                                        retryCount++;
+                                                        setTimeout(checkTiberiumStorage, 200);
+                                                    } else if (retryCount >= maxRetries) {
+                                                        console.log("Tiberium check failed after max retries, skipping base.");
+                                                        return resolve();  // Skip to the next base if retry limit reached
                                                     } else {
                                                         // Base is valid, resolve the promise
                                                         console.log(scanBase);       
 
-                                                        // City repair time
-                                                        // 1 = next level, 0 = current level
-                                                        // scanBase.get_CityBuildingsData().GetFullRepairTime(1);
-                                                        // scanBase.get_CityBuildingsData().GetFullRepairTime(0);
-                                                        
-
                                                         base.Faction = scanBase.get_CityFaction();
-
                                                         base.TiberiumMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Tiberium);
                                                         base.CrystalMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Crystal);
                                                         base.PowerMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Power);
@@ -598,80 +690,42 @@
                                                         base.FactoryRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Vehicle, null);
                                                         base.BarracksRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Aircraft, null);
                                                         
-                                                        base.SupportWeapon = scanBase.get_SupportWeapon().dn;
-                                                        base.SupportWeaponLevel = scanBase.get_SupportData().get_Level();
+                                                        base.SupportWeapon = scanBase.get_SupportWeapon() ? scanBase.get_SupportWeapon().dn : "null";
+                                                        base.SupportWeaponLevel = scanBase.get_SupportWeapon() ? scanBase.get_SupportData().get_Level() : "null";
 
                                                         base.OffensiveLevel = scanBase.get_LvlOffense();
                                                         base.DefensiveLevel = scanBase.get_LvlDefense();
                                                         base.BaseLevel = scanBase.get_LvlBase();
-                                                        base.CommandCenterLevel = scanBase.get_CommandCenterLevel();
-                                                        base.ConstructionYardLevel = scanBase.get_CommandCenterLevel();
+
+                                                        base.NumBuildings = scanBase.GetNumBuildings();
+                                                        base.NumUnitLimitOffense = scanBase.get_UnitLimitOffense();
+
+                                                        console.log("base.NumUnitLimitOffense: ", base.NumUnitLimitOffense);
 
                                                         base.IsProtected = scanBase.get_isProtected();
 
                                                         resolve();  // Notify that the base scanning is done
                                                     }
                                                 }
-                                        
+
                                                 // Call the check function to start checking for Tiberium storage
                                                 checkTiberiumStorage();
                                             });
                                         }
-                        
+
                                         // Start processing bases sequentially, starting with the first base
-                                        // processBasesSequentially(0);
-                                        
-                                        console.log(baseQueue);
+                                        processBasesSequentially(0);
 
-                                        let base = baseQueue[1];
-
-                                        // Call testBase for the current base
-                                        testBase(base).then(() => {
-                                            console.log("Adding base data: " , base.Name);
-                                            this.addBaseData([
-                                                [
-                                                    base.Owner, 
-                                                    base.Name, 
-                                                    base.Score, 
-                                                    base.Faction, 
-                                                    base.TiberiumPackage, 
-                                                    base.TiberiumContinuous, 
-                                                    base.TiberiumMaxStorage, 
-                                                    base.CrystalPackage, 
-                                                    base.CrystalContinuous, 
-                                                    base.CrystalMaxStorage, 
-                                                    base.PowerPackage, 
-                                                    base.PowerContinuous, 
-                                                    base.PowerMaxStorage, 
-                                                    base.CreditPackage, 
-                                                    base.CreditContinuous, 
-                                                    base.FactoryRepairTime, 
-                                                    base.AirfieldRepairTime, 
-                                                    base.BarracksRepairTime, 
-                                                    base.SupportWeapon, 
-                                                    base.SupportWeaponLevel, 
-                                                    base.OffensiveLevel, 
-                                                    base.DefensiveLevel, 
-                                                    base.BaseLevel,
-                                                    base.CommandCenterLevel,
-                                                    base.BaseLayout
-                                                ]
-                                            ]);                                            
-                                            
-                                        }).catch(error => {
-                                            console.error("Error processing base:", base.Name, error);
-                                            
-                                        });
+                                        this.updatePlayerData();
 
                                     }.bind(this)));  // Bind 'this' to the current context
-                        
+
                                 } catch (error) {
                                     console.error("Command execution failed:", error);  // Log any error during execution
                                     reject(error);  // Reject the promise in case of error
                                 }
                             });
                         },
-            
                     }
                 });
                   
@@ -787,14 +841,7 @@
                                 tableManager = new myApp.TableManager();
 
                                 // Example: Add new player data
-                                tableManager.addPlayerData([
-                                [4, "Player4", "Forgotten", 1, 10, 12]  // Adding a new player with Rank 4
-                                ]);
-
-                                // Example: Add new base data
-                                tableManager.addBaseData([
-                                ["A6", "B6", "C6"]  // Adding new base data entry
-                                ]);
+                                tableManager.addPlayerData([[]]);
 
                                 // // Example: Call the scanBases function (which will add player data and refresh tables)
                                 // tableManager.scanBases();
