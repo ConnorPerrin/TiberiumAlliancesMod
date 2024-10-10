@@ -140,6 +140,9 @@
                     this.__RoleName = null;
                     this.__VeteranPointContribution = null;
                     this.__Bases = [];
+
+
+                    this.__PublicPlayerInfoByName = null;
                 }
 
                 // Setters
@@ -162,6 +165,7 @@
                 set Role(value) { this.__Role = value; }
                 set RoleName(value) { this.__RoleName = value; }
                 set VeteranPointContribution(value) { this.__VeteranPointContribution = value; }
+                set PublicPlayerInfoByName(value) { this.__PublicPlayerInfoByName = value; }
                 
                 // Bases-related Setters
                 set Bases(bases) { 
@@ -204,6 +208,7 @@
                 get Role() { return this.__Role; }
                 get RoleName() { return this.__RoleName; }
                 get VeteranPointContribution() { return this.__VeteranPointContribution; }
+                get PublicPlayerInfoByName() { return this.__PublicPlayerInfoByName; }
 
                 // Getter for bases
                 get Bases() {
@@ -237,6 +242,11 @@
                         _baseTableModel: null,
                         _progressBar: null,
                         _progressLabel: null,
+                        _baseProgressBar: null,
+                        _baseProgressLabel: null,
+                        _numPlayers: 50,
+                        _numPlayersScanned: 0,
+                        _numBases: 0,
                         _playerTableData: [],
                         _BaseTableData: [],
                         _players: new Map(),
@@ -376,6 +386,16 @@
                             }
                             this.drawTables(); // Redraw the tables
                         },
+
+                        updateProgressBar: function() {
+                            if (this._numPlayersScanned < this._numPlayers) {
+                                this._numPlayersScanned += 1; // Increase progress
+                                this._progressBar.setWidth((this._numPlayersScanned / this._numPlayers) * 300); // Update width of green bar
+                                this._progressLabel.setValue(this._numPlayersScanned + " / " + this._numPlayers); // Update progress text
+
+                                this._baseProgressLabel.setValue("0 / " + this._numBases);
+                            } 
+                        },
                     
                         // Add data to the Base Table and redraw
                         addBaseData: function(newBaseData) {
@@ -407,34 +427,74 @@
                     
                         // Create progress bar and label
                         _createProgressBar: function() {
-                            let progressBarContainer = new qx.ui.container.Composite(new qx.ui.layout.Canvas());
-                            progressBarContainer.set({
-                                width: 300,
+                            // Create a container to hold both progress bars
+                            let mainContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox(10)); // Horizontal layout with a 10px gap between bars
+                        
+                            // First progress bar container (for players)
+                            let playerProgressBarContainer = new qx.ui.container.Composite(new qx.ui.layout.Canvas());
+                            playerProgressBarContainer.set({
+                                width: 300,          // Fixed width of the container
+                                minWidth: 300,       // Minimum width to prevent resizing
+                                maxWidth: 300,       // Maximum width to prevent resizing
                                 height: 20,
                                 decorator: new qx.ui.decoration.Decorator().set({
                                     backgroundColor: "red"
                                 })
                             });
-                    
-                            // Green bar inside the red container
+                        
+                            // Green bar inside the red container (for players)
                             this._progressBar = new qx.ui.core.Widget().set({
-                                width: 0, // Initial width of 0
+                                width: 0,         // Initial width for the progress bar
                                 height: 30,
                                 backgroundColor: "green"
                             });
-                            progressBarContainer.add(this._progressBar, { left: 0, top: 0 });
-                    
-                            // Progress text label (e.g., "0 / 50")
+                            playerProgressBarContainer.add(this._progressBar, { left: 0, top: 0 });
+                        
+                            // Progress text label (e.g., "0 / 50") for players
                             this._progressLabel = new qx.ui.basic.Label("0 / 50");
-                            progressBarContainer.add(this._progressLabel, { left: "50%", top: "10%", zIndex: 10 });
+                            playerProgressBarContainer.add(this._progressLabel, { left: "50%", top: "10%", zIndex: 10 });
                             this._progressLabel.set({
                                 textColor: "white",
                                 alignX: "center",
                                 alignY: "middle"
                             });
-                    
-                            this._win.add(progressBarContainer);
-                        },
+                        
+                            // Second progress bar container (for bases)
+                            let baseProgressBarContainer = new qx.ui.container.Composite(new qx.ui.layout.Canvas());
+                            baseProgressBarContainer.set({
+                                width: 300,          // Fixed width of the container
+                                minWidth: 300,       // Minimum width to prevent resizing
+                                maxWidth: 300,       // Maximum width to prevent resizing
+                                height: 20,
+                                decorator: new qx.ui.decoration.Decorator().set({
+                                    backgroundColor: "red"  // Different background color for distinction
+                                })
+                            });
+                        
+                            // Green bar inside the blue container (for bases)
+                            this._baseProgressBar = new qx.ui.core.Widget().set({
+                                width: 0,         // Initial width for the progress bar
+                                height: 30,
+                                backgroundColor: "green"
+                            });
+                            baseProgressBarContainer.add(this._baseProgressBar, { left: 0, top: 0 });
+                        
+                            // Progress text label (e.g., "0 / 100") for bases
+                            this._baseProgressLabel = new qx.ui.basic.Label("0 / 100");
+                            baseProgressBarContainer.add(this._baseProgressLabel, { left: "50%", top: "10%", zIndex: 10 });
+                            this._baseProgressLabel.set({
+                                textColor: "white",
+                                alignX: "center",
+                                alignY: "middle"
+                            });
+                        
+                            // Add both progress bar containers to the main container
+                            mainContainer.add(playerProgressBarContainer);
+                            mainContainer.add(baseProgressBarContainer);
+                        
+                            // Add the main container to the window
+                            this._win.add(mainContainer);
+                        },                        
                     
                         // Create TabView to hold multiple tables
                         _createTabView: function() {
@@ -474,8 +534,8 @@
                                     ClientLib.Net.CommunicationManager.GetInstance().SendSimpleCommand(ao, {
                                         name: playerName,
                                     }, webfrontend.phe.cnc.Util.createEventDelegate(ClientLib.Net.CommandResult, null, function(u, f) {
-                                        if (f && f.bd) {
-                                            resolve(f.bd);  // Resolve the promise with the data
+                                        if (f) {
+                                            resolve(f);  // Resolve the promise with the data
                                         } else {
                                             reject("Failed to retrieve player data");
                                         }
@@ -503,15 +563,19 @@
                                 player.Role = member["Role"];
                                 player.RoleName = member["RoleName"];
                                 player.VeteranPointContribution = member["VeteranPointContribution"];
-                                this._players[member["Name"]] = player;
-                        
+                            
                                 try {
                                     let publicPlayerData = await getPublicPlayerInfo(player.Name);
-                                    console.log("Name: ", player.Name, " || Bd: ", publicPlayerData);
-                                    this._players[player.Name].NumBasesDestroyed = publicPlayerData;  // Update player data with the fetched info
+                                    player.PublicPlayerInfoByName = publicPlayerData;
+                                    player.NumBasesDestroyed = publicPlayerData.bd;
+                                    this._numBases += player.NumBases;
                                 } catch (error) {
                                     console.error(`Failed to fetch data for player ${player.Name}: ${error}`);
                                 }
+
+                                this._players[member["Name"]] = player;
+
+                                this.updateProgressBar();
                             }
                         },
                         
@@ -552,173 +616,166 @@
                         getPlayerInfo: function(playerName) {
                             return new Promise((resolve, reject) => {
                                 try {
-                                    let ao = "GetPublicPlayerInfoByName";  // Corrected command
                                     let n = playerName;  // The player name you're querying
-                                    console.log("Sending command:", ao, "with playerName:", n);
 
-                                    // Send the command with an inline event delegate
-                                    ClientLib.Net.CommunicationManager.GetInstance().SendSimpleCommand(ao, {
-                                        name: n,
-                                    }, webfrontend.phe.cnc.Util.createEventDelegate(ClientLib.Net.CommandResult, null, function(u, f) {
+                                    // Ensure the player exists in the players object before adding bases
+                                    if (!this._players[n]) {
+                                        this._players[n] = new Player();
+                                    }
 
-                                        console.log(f);
+                                    // Process bases in sequence
+                                    let baseQueue = this._players[playerName].PublicPlayerInfoByName.c.map(item => {
+                                        let base = new Base();
+                                        base.Owner = n;
+                                        base.Id = item.i;
+                                        base.Name = item.n;
+                                        base.Score = item.p;
+                                        base.X = item.x;
+                                        base.Y = item.y;
 
-                                        // Ensure the player exists in the players object before adding bases
-                                        if (!this._players[n]) {
-                                            this._players[n] = new Player();
+                                        if (this._players.has(n)) {
+                                            this._players.get(n).addBase(base);
                                         }
 
-                                        // Process bases in sequence
-                                        let baseQueue = f.c.map(item => {
-                                            let base = new Base();
-                                            base.Owner = n;
-                                            base.Id = item.i;
-                                            base.Name = item.n;
-                                            base.Score = item.p;
-                                            base.X = item.x;
-                                            base.Y = item.y;
+                                        return base;
+                                    });
 
-                                            if (this._players.has(n)) {
-                                                this._players.get(n).addBase(base);
-                                            }
+                                    const processBasesSequentially = (index) => {
+                                        if (index >= baseQueue.length) {
+                                            console.log("All bases processed for player:", playerName);
+                                            return resolve();  // All bases processed, resolve the promise here
+                                        }
+                                    
+                                        let base = baseQueue[index];
+                                    
+                                        // Call testBase for the current base
+                                        testBase(base).then(() => {
+                                            console.log("Adding base data:", base.Name);
+                                            this.addBaseData([
+                                                [
+                                                    base.Owner, 
+                                                    base.Name, 
+                                                    base.Score, 
+                                                    base.Faction, 
+                                                    base.TiberiumPackage, 
+                                                    base.TiberiumContinuous, 
+                                                    base.TiberiumMaxStorage, 
+                                                    base.CrystalPackage, 
+                                                    base.CrystalContinuous, 
+                                                    base.CrystalMaxStorage, 
+                                                    base.PowerPackage, 
+                                                    base.PowerContinuous, 
+                                                    base.PowerMaxStorage, 
+                                                    base.CreditPackage, 
+                                                    base.CreditContinuous, 
+                                                    base.FactoryRepairTime, 
+                                                    base.AirfieldRepairTime, 
+                                                    base.BarracksRepairTime, 
+                                                    base.SupportWeapon, 
+                                                    base.SupportWeaponLevel, 
+                                                    base.OffensiveLevel, 
+                                                    base.DefensiveLevel, 
+                                                    base.BaseLevel,
+                                                    base.NumBuildings,
+                                                    base.NumUnitLimitOffense,
+                                                    base.BaseLayout
+                                                ]
+                                            ]);
 
-                                            return base;
+                                            // After processing the current base, move to the next one
+                                            processBasesSequentially(index + 1);
+
+                                        }).catch(error => {
+                                            console.error("Error processing base:", base.Name, error);
+                                            processBasesSequentially(index + 1);  // Proceed to next base even in case of error
                                         });
+                                    };
 
-                                        const processBasesSequentially = (index) => {
-                                            if (index >= baseQueue.length) {
-                                                console.log("All bases processed for player:", playerName);
-                                                return resolve();  // All bases processed, resolve the promise here
+                                    function testBase(base) {
+                                        return new Promise((resolve) => {
+                                            ClientLib.Vis.VisMain.GetInstance().CenterGridPosition(base.X, base.Y);
+                                            ClientLib.Vis.VisMain.GetInstance().Update();
+                                            ClientLib.Vis.VisMain.GetInstance().ViewUpdate();
+                                    
+                                            ClientLib.Data.MainData.GetInstance().get_Cities().set_CurrentCityId(base.Id);
+                                            var scanBase = ClientLib.Data.MainData.GetInstance().get_Cities().GetCity(base.Id);
+                                            var comm = ClientLib.Net.CommunicationManager.GetInstance();
+                                            comm.UserAction();
+
+                                            // If base was destroyed, resolve immediately
+                                            if (scanBase.get_IsGhostMode()) {
+                                                console.log("Base destroyed.");
+                                                return resolve();  // Continue to the next base
                                             }
-                                        
-                                            let base = baseQueue[index];
-                                        
-                                            // Call testBase for the current base
-                                            testBase(base).then(() => {
-                                                console.log("Adding base data:", base.Name);
-                                                this.addBaseData([
-                                                    [
-                                                        base.Owner, 
-                                                        base.Name, 
-                                                        base.Score, 
-                                                        base.Faction, 
-                                                        base.TiberiumPackage, 
-                                                        base.TiberiumContinuous, 
-                                                        base.TiberiumMaxStorage, 
-                                                        base.CrystalPackage, 
-                                                        base.CrystalContinuous, 
-                                                        base.CrystalMaxStorage, 
-                                                        base.PowerPackage, 
-                                                        base.PowerContinuous, 
-                                                        base.PowerMaxStorage, 
-                                                        base.CreditPackage, 
-                                                        base.CreditContinuous, 
-                                                        base.FactoryRepairTime, 
-                                                        base.AirfieldRepairTime, 
-                                                        base.BarracksRepairTime, 
-                                                        base.SupportWeapon, 
-                                                        base.SupportWeaponLevel, 
-                                                        base.OffensiveLevel, 
-                                                        base.DefensiveLevel, 
-                                                        base.BaseLevel,
-                                                        base.NumBuildings,
-                                                        base.NumUnitLimitOffense,
-                                                        base.BaseLayout
-                                                    ]
-                                                ]);
 
-                                                // After processing the current base, move to the next one
-                                                processBasesSequentially(index + 1);
+                                            // Retry mechanism for checking Tiberium storage with a retry limit
+                                            let retryCount = 0;
+                                            let maxRetries = 25;  // Set a retry limit
 
-                                            }).catch(error => {
-                                                console.error("Error processing base:", base.Name, error);
-                                                processBasesSequentially(index + 1);  // Proceed to next base even in case of error
-                                            });
-                                        };
+                                            function checkTiberiumStorage() {
+                                                var tibTest = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Tiberium);
 
-                                        function testBase(base) {
-                                            return new Promise((resolve) => {
-                                                ClientLib.Vis.VisMain.GetInstance().CenterGridPosition(base.X, base.Y);
-                                                ClientLib.Vis.VisMain.GetInstance().Update();
-                                                ClientLib.Vis.VisMain.GetInstance().ViewUpdate();
-                                        
-                                                ClientLib.Data.MainData.GetInstance().get_Cities().set_CurrentCityId(base.Id);
-                                                var scanBase = ClientLib.Data.MainData.GetInstance().get_Cities().GetCity(base.Id);
-                                                var comm = ClientLib.Net.CommunicationManager.GetInstance();
-                                                comm.UserAction();
+                                                if (tibTest === 0 && retryCount < maxRetries) {
+                                                    // Retry after 2 seconds if tibTest is still zero, up to maxRetries
+                                                    retryCount++;
+                                                    setTimeout(checkTiberiumStorage, 200);
+                                                } else if (retryCount >= maxRetries) {
+                                                    console.log("Tiberium check failed after max retries, skipping base.");
+                                                    return resolve();  // Skip to the next base if retry limit reached
+                                                } else {
+                                                    // Base is valid, resolve the promise
+                                                    console.log(scanBase);       
 
-                                                // If base was destroyed, resolve immediately
-                                                if (scanBase.get_IsGhostMode()) {
-                                                    console.log("Base destroyed.");
-                                                    return resolve();  // Continue to the next base
+                                                    base.Faction = scanBase.get_CityFaction();
+                                                    base.TiberiumMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Tiberium);
+                                                    base.CrystalMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Crystal);
+                                                    base.PowerMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Power);
+
+                                                    base.TiberiumPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Tiberium);
+                                                    base.CrystalPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Crystal);
+                                                    base.PowerPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Power);
+                                                    base.CreditPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Gold);
+
+                                                    base.TiberiumContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Tiberium, !1, !1);
+                                                    base.CrystalContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Crystal, !1, !1);
+                                                    base.PowerContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Power, !1, !1);
+                                                    base.CreditContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Gold, !1, !1);
+
+                                                    base.AirfieldRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Infantry, null);
+                                                    base.FactoryRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Vehicle, null);
+                                                    base.BarracksRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Aircraft, null);
+                                                    
+                                                    base.SupportWeapon = scanBase.get_SupportWeapon() ? scanBase.get_SupportWeapon().dn : "null";
+                                                    base.SupportWeaponLevel = scanBase.get_SupportWeapon() ? scanBase.get_SupportData().get_Level() : "null";
+
+                                                    base.OffensiveLevel = scanBase.get_LvlOffense();
+                                                    base.DefensiveLevel = scanBase.get_LvlDefense();
+                                                    base.BaseLevel = scanBase.get_LvlBase();
+
+                                                    // "-1" to counter that the construction yard is a building
+                                                    base.NumBuildings = scanBase.GetNumBuildings()-1; 
+
+                                                    base.NumUnitLimitOffense = scanBase.get_UnitLimitOffense();
+
+                                                    console.log("base.NumUnitLimitOffense: ", base.NumUnitLimitOffense);
+
+                                                    base.IsProtected = scanBase.get_isProtected();
+
+                                                    resolve();  // Notify that the base scanning is done
                                                 }
+                                            }
 
-                                                // Retry mechanism for checking Tiberium storage with a retry limit
-                                                let retryCount = 0;
-                                                let maxRetries = 25;  // Set a retry limit
+                                            // Call the check function to start checking for Tiberium storage
+                                            checkTiberiumStorage();
+                                        });
+                                    }
 
-                                                function checkTiberiumStorage() {
-                                                    var tibTest = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Tiberium);
+                                    // Start processing bases sequentially, starting with the first base
+                                    processBasesSequentially(0);
 
-                                                    if (tibTest === 0 && retryCount < maxRetries) {
-                                                        // Retry after 2 seconds if tibTest is still zero, up to maxRetries
-                                                        retryCount++;
-                                                        setTimeout(checkTiberiumStorage, 200);
-                                                    } else if (retryCount >= maxRetries) {
-                                                        console.log("Tiberium check failed after max retries, skipping base.");
-                                                        return resolve();  // Skip to the next base if retry limit reached
-                                                    } else {
-                                                        // Base is valid, resolve the promise
-                                                        console.log(scanBase);       
+                                    this.updatePlayerData();
 
-                                                        base.Faction = scanBase.get_CityFaction();
-                                                        base.TiberiumMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Tiberium);
-                                                        base.CrystalMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Crystal);
-                                                        base.PowerMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Power);
-
-                                                        base.TiberiumPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Tiberium);
-                                                        base.CrystalPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Crystal);
-                                                        base.PowerPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Power);
-                                                        base.CreditPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Gold);
-
-                                                        base.TiberiumContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Tiberium, !1, !1);
-                                                        base.CrystalContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Crystal, !1, !1);
-                                                        base.PowerContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Power, !1, !1);
-                                                        base.CreditContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Gold, !1, !1);
-
-                                                        base.AirfieldRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Infantry, null);
-                                                        base.FactoryRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Vehicle, null);
-                                                        base.BarracksRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Aircraft, null);
-                                                        
-                                                        base.SupportWeapon = scanBase.get_SupportWeapon() ? scanBase.get_SupportWeapon().dn : "null";
-                                                        base.SupportWeaponLevel = scanBase.get_SupportWeapon() ? scanBase.get_SupportData().get_Level() : "null";
-
-                                                        base.OffensiveLevel = scanBase.get_LvlOffense();
-                                                        base.DefensiveLevel = scanBase.get_LvlDefense();
-                                                        base.BaseLevel = scanBase.get_LvlBase();
-
-                                                        base.NumBuildings = scanBase.GetNumBuildings();
-                                                        base.NumUnitLimitOffense = scanBase.get_UnitLimitOffense();
-
-                                                        console.log("base.NumUnitLimitOffense: ", base.NumUnitLimitOffense);
-
-                                                        base.IsProtected = scanBase.get_isProtected();
-
-                                                        resolve();  // Notify that the base scanning is done
-                                                    }
-                                                }
-
-                                                // Call the check function to start checking for Tiberium storage
-                                                checkTiberiumStorage();
-                                            });
-                                        }
-
-                                        // Start processing bases sequentially, starting with the first base
-                                        processBasesSequentially(0);
-
-                                        this.updatePlayerData();
-
-                                    }.bind(this)));  // Bind 'this' to the current context
+                                   
 
                                 } catch (error) {
                                     console.error("Command execution failed:", error);  // Log any error during execution
