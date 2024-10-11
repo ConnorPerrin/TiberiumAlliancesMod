@@ -46,7 +46,8 @@
                     this.__numBuildings = null;
                     this.__numUnitLimitOffense = null;
                     this.__isProtected = null;
-                    this.__baseLayout = null;
+                    this.__baseResourceLayout = null;
+                    this.__baseBuildingLayout = null;
                 }
             
                 // Setters
@@ -79,7 +80,8 @@
                 set NumBuildings(value) { this.__numBuildings = value; }
                 set NumUnitLimitOffense(value) { this.__numUnitLimitOffense = value; }
                 set IsProtected(value) { this.__isProtected = value; }
-                set BaseLayout(value) { this.__baseLayout = value; }
+                set BaseResourceLayout(value) { this.__baseResourceLayout = value; }
+                set BaseBuildingLayout(value) { this.__baseBuildingLayout = value; }
             
                 // Getters
                 get Id() { return this.__id; }
@@ -111,7 +113,8 @@
                 get NumBuildings() { return this.__numBuildings; }
                 get NumUnitLimitOffense() { return this.__numUnitLimitOffense; }
                 get IsProtected() { return this.__isProtected; }
-                get BaseLayout() { return this.__baseLayout; }
+                get BaseResourceLayout() { return this.__baseResourceLayout; }
+                get BaseBuildingLayout() { return this.__baseBuildingLayout; }
             }
             
 
@@ -247,6 +250,7 @@
                         _numPlayers: 50,
                         _numPlayersScanned: 0,
                         _numBases: 0,
+                        _numbasesScanned: 0,
                         _playerTableData: [],
                         _BaseTableData: [],
                         _players: new Map(),
@@ -313,7 +317,8 @@
                                 "Base Level",
                                 "Number of Buildings",
                                 "Number of Offensive Units",
-                                "Base Layout"
+                                "Base Resource Layout",
+                                "Base Building Layout",
                             ]);                            
                             this._baseTable.setTableModel(this._baseTableModel);
                         },
@@ -394,6 +399,14 @@
                                 this._progressLabel.setValue(this._numPlayersScanned + " / " + this._numPlayers); // Update progress text
 
                                 this._baseProgressLabel.setValue("0 / " + this._numBases);
+                            } 
+                        },
+
+                        updateBaseProgressBar: function() {
+                            if (this._numbasesScanned < this._numBases) {
+                                this._numbasesScanned += 1; // Increase progress
+                                this._baseProgressBar.setWidth((this._numbasesScanned / this._numBases) * 300); // Update width of green bar
+                                this._baseProgressLabel.setValue(this._numbasesScanned + " / " + this._numBases); // Update progress text
                             } 
                         },
                     
@@ -678,9 +691,12 @@
                                                     base.BaseLevel,
                                                     base.NumBuildings,
                                                     base.NumUnitLimitOffense,
-                                                    base.BaseLayout
+                                                    base.BaseResourceLayout,
+                                                    base.BaseBuildingLayout
                                                 ]
                                             ]);
+
+                                            this.updateBaseProgressBar();
 
                                             // After processing the current base, move to the next one
                                             processBasesSequentially(index + 1);
@@ -723,9 +739,6 @@
                                                     console.log("Tiberium check failed after max retries, skipping base.");
                                                     return resolve();  // Skip to the next base if retry limit reached
                                                 } else {
-                                                    // Base is valid, resolve the promise
-                                                    console.log(scanBase);       
-
                                                     base.Faction = scanBase.get_CityFaction();
                                                     base.TiberiumMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Tiberium);
                                                     base.CrystalMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Crystal);
@@ -734,12 +747,12 @@
                                                     base.TiberiumPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Tiberium);
                                                     base.CrystalPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Crystal);
                                                     base.PowerPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Power);
-                                                    base.CreditPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Gold);
+                                                    base.CreditPackage = webfrontend.phe.cnc.gui.util.Numbers.formatNumbers(Math.floor(ClientLib.Base.Resource.GetResourceBonusGrowPerHour(scanBase.get_CityCreditsProduction())));
 
                                                     base.TiberiumContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Tiberium, !1, !1);
                                                     base.CrystalContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Crystal, !1, !1);
                                                     base.PowerContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Power, !1, !1);
-                                                    base.CreditContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Gold, !1, !1);
+                                                    base.CreditContinuous = webfrontend.phe.cnc.gui.util.Numbers.formatNumbers(Math.floor(ClientLib.Base.Resource.GetResourceGrowPerHour(scanBase.get_CityCreditsProduction(), !1)));
 
                                                     base.AirfieldRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Infantry, null);
                                                     base.FactoryRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Vehicle, null);
@@ -754,12 +767,11 @@
 
                                                     // "-1" to counter that the construction yard is a building
                                                     base.NumBuildings = scanBase.GetNumBuildings()-1; 
-
                                                     base.NumUnitLimitOffense = scanBase.get_UnitLimitOffense();
-
-                                                    console.log("base.NumUnitLimitOffense: ", base.NumUnitLimitOffense);
-
                                                     base.IsProtected = scanBase.get_isProtected();
+
+                                                    base.BaseResourceLayout = getResourceLayout(scanBase);
+                                                    base.BaseBuildingLayout = getBuildingLayout(scanBase);
 
                                                     resolve();  // Notify that the base scanning is done
                                                 }
@@ -770,12 +782,40 @@
                                         });
                                     }
 
+                                    function getResourceLayout(base) {
+                                        var layout = [];
+                                        try {
+                                            for (var y = 0; y < 8; y++) {
+                                                for (var x = 0; x < 9; x++) {
+                                                    var resourceType = base.GetResourceType(x, y);
+                                                    switch (resourceType) {
+                                                        case 0:
+                                                            layout.push('.');
+                                                            break;
+                                                        case 1:
+                                                            layout.push('c');
+                                                            break;
+                                                        case 2:
+                                                            layout.push('t');
+                                                            break;
+                                                    }
+                                                }
+                                            }
+                                        } catch (e) {
+                                            console.error('\terror: ' + e);
+                                        } finally {
+                                            return layout.join('');
+                                        }
+                                    }
+
+                                    function getBuildingLayout(base) {
+                                        console.log(base.get_Buildings());
+                                    }
+
                                     // Start processing bases sequentially, starting with the first base
                                     processBasesSequentially(0);
 
                                     this.updatePlayerData();
-
-                                   
 
                                 } catch (error) {
                                     console.error("Command execution failed:", error);  // Log any error during execution
@@ -786,6 +826,8 @@
                     }
                 });
                   
+
+                
                   
 
                 
