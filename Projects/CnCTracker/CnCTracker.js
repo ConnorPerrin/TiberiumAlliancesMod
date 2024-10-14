@@ -317,8 +317,6 @@
                                 "Base Level",
                                 "Number of Buildings",
                                 "Number of Offensive Units",
-                                "Base Resource Layout",
-                                "Base Building Layout",
                             ]);                            
                             this._baseTable.setTableModel(this._baseTableModel);
                         },
@@ -538,6 +536,7 @@
 
                         // PLAYER INFO
                         getPlayers: async function() {
+                            this._numPlayers = ClientLib.Data.MainData.GetInstance().get_Alliance().get_NumMembers();
                             let members = ClientLib.Data.MainData.GetInstance().get_Alliance().get_MemberDataAsArray();
                         
                             // A function to wrap the asynchronous command
@@ -681,18 +680,16 @@
                                                     base.PowerMaxStorage, 
                                                     base.CreditPackage, 
                                                     base.CreditContinuous, 
-                                                    base.FactoryRepairTime, 
-                                                    base.AirfieldRepairTime, 
-                                                    base.BarracksRepairTime, 
+                                                    this.formatTime(base.FactoryRepairTime), 
+                                                    this.formatTime(base.AirfieldRepairTime), 
+                                                    this.formatTime(base.BarracksRepairTime), 
                                                     base.SupportWeapon, 
                                                     base.SupportWeaponLevel, 
                                                     base.OffensiveLevel, 
                                                     base.DefensiveLevel, 
                                                     base.BaseLevel,
                                                     base.NumBuildings,
-                                                    base.NumUnitLimitOffense,
-                                                    base.BaseResourceLayout,
-                                                    base.BaseBuildingLayout
+                                                    base.NumUnitLimitOffense
                                                 ]
                                             ]);
 
@@ -809,8 +806,22 @@
                                     }
 
                                     function getBuildingLayout(base) {
-                                        console.log(base.get_Buildings());
-                                    }
+                                        var layout = [];
+                                        var buildings = base.get_Buildings().d;
+                                    
+                                        for (let building_key in buildings) {
+                                            if (buildings.hasOwnProperty(building_key)) {
+                                                let building = buildings[building_key];
+                                                layout.push({
+                                                    x: building.get_CoordX(),
+                                                    y: building.get_CoordY(),
+                                                    type: building.get_Type()
+                                                });
+                                            }
+                                        }
+                                        
+                                        return layout;
+                                    }                                    
 
                                     // Start processing bases sequentially, starting with the first base
                                     processBasesSequentially(0);
@@ -822,6 +833,14 @@
                                     reject(error);  // Reject the promise in case of error
                                 }
                             });
+                        },
+
+                        formatTime: function(seconds) {
+                            let hours = Math.floor(seconds / 3600);
+                            let minutes = Math.floor((seconds % 3600) / 60);
+                            let remainingSeconds = seconds % 60;
+                        
+                            return `${hours}hrs ${minutes}mins ${remainingSeconds}secs`;
                         },
                     }
                 });
