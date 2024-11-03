@@ -18,6 +18,7 @@
             class Base {
                 constructor() {
                     this.__id = null;
+                    this.__baseNum = null;
                     this.__owner = null;
                     this.__name = null;
                     this.__score = null;
@@ -52,6 +53,7 @@
             
                 // Setters
                 set Id(value) { this.__id = value; }
+                set BaseNum(value) { this.__baseNum = value; }
                 set Owner(value) { this.__owner = value; }
                 set Name(value) { this.__name = value; }
                 set Score(value) { this.__score = value; }
@@ -85,6 +87,7 @@
             
                 // Getters
                 get Id() { return this.__id; }
+                get BaseNum() { return this.__baseNum; }
                 get Owner() { return this.__owner; }
                 get Name() { return this.__name; }
                 get Score() { return this.__score; }
@@ -118,8 +121,6 @@
             }
             
 
-
-
             // Define the Player class
             class Player {
                 constructor() {
@@ -127,6 +128,8 @@
                     this.__AvgOffenseLvl = null;
                     this.__NumBases = null;
                     this.__NumBasesDestroyed = null;
+                    this.__PvP = null;
+                    this.__PvE = null;
                     this.__BestDefenseLvl = null;
                     this.__BestOffenseLvl = null;
                     this.__Faction = null;
@@ -153,6 +156,8 @@
                 set AvgOffenseLvl(value) { this.__AvgOffenseLvl = value; }
                 set NumBases(value) { this.__NumBases = value; }
                 set NumBasesDestroyed(value) { this.__NumBasesDestroyed = value; }
+                set PvP(value) { this.__PvP = value; }
+                set PvE(value) { this.__PvE = value; }
                 set BestDefenseLvl(value) { this.__BestDefenseLvl = value; }
                 set BestOffenseLvl(value) { this.__BestOffenseLvl = value; }
                 set Faction(value) { this.__Faction = value; }
@@ -196,6 +201,8 @@
                 get AvgOffenseLvl() { return this.__AvgOffenseLvl; }
                 get NumBases() { return this.__NumBases; }
                 get NumBasesDestroyed() { return this.__NumBasesDestroyed; }
+                get PvP() { return this.__PvP; }
+                get PvE() { return this.__PvE; }
                 get BestDefenseLvl() { return this.__BestDefenseLvl; }
                 get BestOffenseLvl() { return this.__BestOffenseLvl; }
                 get Faction() { return this.FactionToName(this.__Faction); }
@@ -282,7 +289,9 @@
                                 "Name", 
                                 "Faction", 
                                 "Bases", 
-                                "Bases Destoryed",                                
+                                "Bases Destoryed", 
+                                "PvP",
+                                "PvE",                               
                                 "Best Offense Level", 
                                 "Best Defense Level"
                             ]);
@@ -293,7 +302,7 @@
                             this._baseTableModel = new qx.ui.table.model.Simple();
                             this._baseTableModel.setColumns([
                                 "Owner", 
-                                "Base Name", 
+                                "Base Name (num)", 
                                 "Score", 
                                 "Faction", 
                                 "Tiberium Package", 
@@ -339,32 +348,14 @@
                             });
                             this._playerTableModel.setData(playerData);
                         },
-                    
-                        // Add data to the Player Table and redraw
+                        
+                        // Add data to the Player Table as each player's data is retrieved
                         addPlayerData: async function() {
-                            // Wait for getPlayers to complete
-                            await this.getPlayers();
-                        
-                            // Use a traditional for-loop to iterate through the players map or object
-                            for (let id in this._players) {
-                                if (this._players.hasOwnProperty(id)) {  // Ensure the property is a player's property
-                                    let player = this._players[id];
-                        
-                                    // Push the player's data into the tableData array
-                                    this._playerTableData.push([
-                                        player.Rank,
-                                        player.Name,
-                                        player.Faction,
-                                        player.NumBases,
-                                        player.NumBasesDestroyed,
-                                        player.BestOffenseLvl,
-                                        player.BestDefenseLvl,
-                                    ]);
-                                }
+                            if(this._playerTableData.length == 0) {
+                                // Wait for getPlayers to complete
+                                await this.getPlayers();
                             }
-                        
-                            this.drawTables();  // Redraw the tables
-                        },                        
+                        },
 
                         // Add data to the Player Table and redraw
                         updatePlayerData: function() {
@@ -382,6 +373,8 @@
                                         player.Faction,
                                         player.NumBases,
                                         player.NumBasesDestroyed,
+                                        player.PvP,
+                                        player.PvE,
                                         player.BestOffenseLvl,
                                         player.BestDefenseLvl,
                                     ]);
@@ -424,14 +417,14 @@
                             this.getBases(); // Placeholder function, replace with actual logic
                             }, this);
                     
-                            // Scan button
-                            let scanButton = new qx.ui.form.Button("Scan");
-                            scanButton.addListener("execute", function() {
-                            this.scanBases(); // Placeholder function, replace with actual logic
+                            // Send button
+                            let sendButton = new qx.ui.form.Button("Send");
+                            sendButton.addListener("execute", function() {
+                                this.sendBases(); // Placeholder function, replace with actual logic
                             }, this);
                     
                             container.add(getBasesButton);
-                            container.add(scanButton);
+                            container.add(sendButton);
                     
                             this._win.add(container);
                         },
@@ -526,19 +519,32 @@
                             this._win.add(tabView, { left: 10, top: 10, right: 10, bottom: 10 });
                         },
                     
-                        scanBases: function() {
-                            console.log("Scan button clicked");
-                            this.addPlayerData([
-                                [3, "Player3", "GDI", 2, 14, 16]
-                            ]); // Add new player data and redraw
+                        sendBases: function() {
+                            console.log("Send button clicked");
+                            
+                            const data = {
+                                playerTableData: this._playerTableData,
+                                baseTableData: this._BaseTableData
+                            };
+
+                            console.log(data);
+
+                            // fetch('https://your-website.com/receiveData.php', {
+                            //     method: 'POST',
+                            //     headers: {
+                            //       'Content-Type': 'application/json',
+                            //     },
+                            //     body: JSON.stringify(data),
+                            //   }).then(response => response.json())
+                            //     .then(result => console.log('Data sent successfully:', result))
+                            //     .catch(error => console.error('Error sending data:', error));
                         },
                         
-
                         // PLAYER INFO
                         getPlayers: async function() {
                             this._numPlayers = ClientLib.Data.MainData.GetInstance().get_Alliance().get_NumMembers();
                             let members = ClientLib.Data.MainData.GetInstance().get_Alliance().get_MemberDataAsArray();
-                        
+
                             // A function to wrap the asynchronous command
                             const getPublicPlayerInfo = async (playerName) => {
                                 return new Promise((resolve, reject) => {
@@ -554,7 +560,7 @@
                                     }));
                                 });
                             };
-                        
+
                             for (let member of members) {
                                 let player = new Player();
                                 player.AvgDefenseLvl = member["AvgDefenseLvl"];
@@ -580,6 +586,8 @@
                                     let publicPlayerData = await getPublicPlayerInfo(player.Name);
                                     player.PublicPlayerInfoByName = publicPlayerData;
                                     player.NumBasesDestroyed = publicPlayerData.bd;
+                                    player.PvP = publicPlayerData.bd - publicPlayerData.bde;
+                                    player.PvE = publicPlayerData.bde;
                                     this._numBases += player.NumBases;
                                 } catch (error) {
                                     console.error(`Failed to fetch data for player ${player.Name}: ${error}`);
@@ -587,6 +595,23 @@
 
                                 this._players[member["Name"]] = player;
 
+                                // Push the player's data into the tableData array immediately
+                                this._playerTableData.push([
+                                    player.Rank,
+                                    player.Name,
+                                    player.Faction,
+                                    player.NumBases,
+                                    player.NumBasesDestroyed,
+                                    player.PvP,
+                                    player.PvE,
+                                    player.BestOffenseLvl,
+                                    player.BestDefenseLvl,
+                                ]);
+
+                                // Update the player table immediately
+                                this.drawTables();
+
+                                // Update the progress bar as each player is processed
                                 this.updateProgressBar();
                             }
                         },
@@ -636,10 +661,11 @@
                                     }
 
                                     // Process bases in sequence
-                                    let baseQueue = this._players[playerName].PublicPlayerInfoByName.c.map(item => {
+                                    let baseQueue = this._players[playerName].PublicPlayerInfoByName.c.map((item, index) => {
                                         let base = new Base();
                                         base.Owner = n;
                                         base.Id = item.i;
+                                        base.BaseNum = index;
                                         base.Name = item.n;
                                         base.Score = item.p;
                                         base.X = item.x;
@@ -666,7 +692,7 @@
                                             this.addBaseData([
                                                 [
                                                     base.Owner, 
-                                                    base.Name, 
+                                                    base.Name + " ("+base.BaseNum+")",
                                                     base.Score, 
                                                     base.Faction, 
                                                     base.TiberiumPackage, 
@@ -961,8 +987,8 @@
                                 // Example: Add new player data
                                 tableManager.addPlayerData([[]]);
 
-                                // // Example: Call the scanBases function (which will add player data and refresh tables)
-                                // tableManager.scanBases();
+                                // // Example: Call the sendBases function (which will add player data and refresh tables)
+                                // tableManager.sendBases();
 
                                 // // Example: Call the getBases function (which will add base data and refresh tables)
                                 // tableManager.getBases();
