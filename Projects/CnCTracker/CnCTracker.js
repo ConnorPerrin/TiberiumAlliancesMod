@@ -14,6 +14,78 @@
             // let players = new Map();
             let tableManager = null;
 
+            class AllianceData {
+                constructor(player = '', bases = 0, numNod = 0, numGDI = 0, bonuses = [], 
+                            tiberiumBonus = 0, crystalBonus = 0, powerBonus = 0,
+                            infantryBonus = 0, vehicleBonus = 0, airBonus = 0, defenseBonus = 0) {
+                    this.__player = player;
+                    this.__bases = bases;
+                    this.__numNod = numNod;
+                    this.__numGDI = numGDI;
+                    this.__bonuses = bonuses;
+                    this.__tiberiumBonus = tiberiumBonus;
+                    this.__crystalBonus = crystalBonus;
+                    this.__powerBonus = powerBonus;
+                    this.__infantryBonus = infantryBonus;
+                    this.__vehicleBonus = vehicleBonus;
+                    this.__airBonus = airBonus;
+                    this.__defenseBonus = defenseBonus;
+                }
+            
+                // Setters
+                set player(value) { this.__player = value; }
+                set bases(value) { this.__bases = value; }
+                set numNod(value) { this.__numNod = value; }
+                set numGDI(value) { this.__numGDI = value; }
+                set bonuses(value) { 
+                    if (Array.isArray(value)) this.__bonuses = value;
+                    else throw new Error("Bonuses must be an array");
+                }
+                set tiberiumBonus(value) { this.__tiberiumBonus = value; }
+                set crystalBonus(value) { this.__crystalBonus = value; }
+                set powerBonus(value) { this.__powerBonus = value; }
+                set infantryBonus(value) { this.__infantryBonus = value; }
+                set vehicleBonus(value) { this.__vehicleBonus = value; }
+                set airBonus(value) { this.__airBonus = value; }
+                set defenseBonus(value) { this.__defenseBonus = value; }
+            
+                // Getters
+                get player() { return this.__player; }
+                get bases() { return this.__bases; }
+                get numNod() { return this.__numNod; }
+                get numGDI() { return this.__numGDI; }
+                get bonuses() { return this.__bonuses; }
+                get tiberiumBonus() { return this.__tiberiumBonus; }
+                get crystalBonus() { return this.__crystalBonus; }
+                get powerBonus() { return this.__powerBonus; }
+                get infantryBonus() { return this.__infantryBonus; }
+                get vehicleBonus() { return this.__vehicleBonus; }
+                get airBonus() { return this.__airBonus; }
+                get defenseBonus() { return this.__defenseBonus; }
+            }
+            
+            // Helper class for Bonus type
+            class Bonus {
+                constructor(type = '', levels = 0, x = 0, y = 0) {
+                    this.__type = type;
+                    this.__levels = levels;
+                    this.__x = x;
+                    this.__y = y;
+                }
+            
+                // Setters
+                set type(value) { this.__type = value; }
+                set levels(value) { this.__levels = value; }
+                set x(value) { this.__x = value; }
+                set y(value) { this.__y = value; }
+            
+                // Getters
+                get type() { return this.__type; }
+                get levels() { return this.__levels; }
+                get x() { return this.__x; }
+                get y() { return this.__y; }
+            }
+
             // Define the Base class (assuming it's something like this)
             class Base {
                 constructor() {
@@ -542,6 +614,8 @@
                         
                         // PLAYER INFO
                         getPlayers: async function() {
+                            console.log(ClientLib.Data.MainData.GetInstance().get_Alliance());
+                            console.log("get_POITiberiumBonus: ", ClientLib.Data.MainData.GetInstance().get_Alliance().get_POITiberiumBonus())
                             this._numPlayers = ClientLib.Data.MainData.GetInstance().get_Alliance().get_NumMembers();
                             let members = ClientLib.Data.MainData.GetInstance().get_Alliance().get_MemberDataAsArray();
 
