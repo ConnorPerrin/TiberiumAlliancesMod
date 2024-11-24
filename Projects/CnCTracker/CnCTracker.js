@@ -15,14 +15,18 @@
             let tableManager = null;
 
             class AllianceData {
-                constructor(player = '', bases = 0, numNod = 0, numGDI = 0, bonuses = [], 
-                            tiberiumBonus = 0, crystalBonus = 0, powerBonus = 0,
-                            infantryBonus = 0, vehicleBonus = 0, airBonus = 0, defenseBonus = 0) {
-                    this.__player = player;
-                    this.__bases = bases;
+                constructor(
+                    numPlayers = '', numBases = 0, numNod = 0, numGDI = 0, pois = [],
+                    tiberiumBonus = 0, crystalBonus = 0, powerBonus = 0,
+                    infantryBonus = 0, vehicleBonus = 0, airBonus = 0, defenseBonus = 0,
+                    tiberiumRank = 0, crystalRank = 0, powerRank = 0,
+                    infantryRank = 0, vehicleRank = 0, airRank = 0, defenseRank = 0
+                ) {
+                    this.__numPlayers = numPlayers;
+                    this.__numBases = numBases;
                     this.__numNod = numNod;
                     this.__numGDI = numGDI;
-                    this.__bonuses = bonuses;
+                    this.__pois = pois; // Updated from __bonuses
                     this.__tiberiumBonus = tiberiumBonus;
                     this.__crystalBonus = crystalBonus;
                     this.__powerBonus = powerBonus;
@@ -30,16 +34,24 @@
                     this.__vehicleBonus = vehicleBonus;
                     this.__airBonus = airBonus;
                     this.__defenseBonus = defenseBonus;
+            
+                    this.__tiberiumRank = tiberiumRank;
+                    this.__crystalRank = crystalRank;
+                    this.__powerRank = powerRank;
+                    this.__infantryRank = infantryRank;
+                    this.__vehicleRank = vehicleRank;
+                    this.__airRank = airRank;
+                    this.__defenseRank = defenseRank;
                 }
             
                 // Setters
-                set player(value) { this.__player = value; }
-                set bases(value) { this.__bases = value; }
+                set numPlayers(value) { this.__numPlayers = value; }
+                set numBases(value) { this.__numBases = value; }
                 set numNod(value) { this.__numNod = value; }
                 set numGDI(value) { this.__numGDI = value; }
-                set bonuses(value) { 
-                    if (Array.isArray(value)) this.__bonuses = value;
-                    else throw new Error("Bonuses must be an array");
+                set pois(value) { // Updated setter
+                    if (Array.isArray(value)) this.__pois = value;
+                    else throw new Error("POIs must be an array");
                 }
                 set tiberiumBonus(value) { this.__tiberiumBonus = value; }
                 set crystalBonus(value) { this.__crystalBonus = value; }
@@ -49,12 +61,20 @@
                 set airBonus(value) { this.__airBonus = value; }
                 set defenseBonus(value) { this.__defenseBonus = value; }
             
+                set tiberiumRank(value) { this.__tiberiumRank = value; }
+                set crystalRank(value) { this.__crystalRank = value; }
+                set powerRank(value) { this.__powerRank = value; }
+                set infantryRank(value) { this.__infantryRank = value; }
+                set vehicleRank(value) { this.__vehicleRank = value; }
+                set airRank(value) { this.__airRank = value; }
+                set defenseRank(value) { this.__defenseRank = value; }
+            
                 // Getters
-                get player() { return this.__player; }
-                get bases() { return this.__bases; }
+                get numPlayers() { return this.__numPlayers; }
+                get numBases() { return this.__numBases; }
                 get numNod() { return this.__numNod; }
                 get numGDI() { return this.__numGDI; }
-                get bonuses() { return this.__bonuses; }
+                get pois() { return this.__pois; } // Updated getter
                 get tiberiumBonus() { return this.__tiberiumBonus; }
                 get crystalBonus() { return this.__crystalBonus; }
                 get powerBonus() { return this.__powerBonus; }
@@ -62,26 +82,46 @@
                 get vehicleBonus() { return this.__vehicleBonus; }
                 get airBonus() { return this.__airBonus; }
                 get defenseBonus() { return this.__defenseBonus; }
-            }
+            
+                get tiberiumRank() { return this.__tiberiumRank; }
+                get crystalRank() { return this.__crystalRank; }
+                get powerRank() { return this.__powerRank; }
+                get infantryRank() { return this.__infantryRank; }
+                get vehicleRank() { return this.__vehicleRank; }
+                get airRank() { return this.__airRank; }
+                get defenseRank() { return this.__defenseRank; }
+            
+                // Method to add a POI
+                addPOI(bonus) {
+                    if (bonus && typeof bonus === 'object') {
+                        this.__pois.push(bonus);
+                    } else {
+                        throw new Error("Invalid Bonus object");
+                    }
+                }
+            }                     
             
             // Helper class for Bonus type
             class Bonus {
-                constructor(type = '', levels = 0, x = 0, y = 0) {
+                constructor(type = '', amount = 0, level = 0, x = 0, y = 0) {
                     this.__type = type;
-                    this.__levels = levels;
+                    this.__amount = amount;
+                    this.__level = level;
                     this.__x = x;
                     this.__y = y;
                 }
             
                 // Setters
                 set type(value) { this.__type = value; }
-                set levels(value) { this.__levels = value; }
+                set amount(value) { this.__amount = value; }
+                set level(value) { this.__level = value; }
                 set x(value) { this.__x = value; }
                 set y(value) { this.__y = value; }
             
                 // Getters
                 get type() { return this.__type; }
-                get levels() { return this.__levels; }
+                get amount() { return this.__amount; }
+                get level() { return this.__level; }
                 get x() { return this.__x; }
                 get y() { return this.__y; }
             }
@@ -313,6 +353,7 @@
                       this._createButtons();
                       this._createProgressBar();
                       this._createTabView();
+                      this._getAllianceInfo()
                       this.drawTables(); // Initialize with default entries
                     },
                   
@@ -333,6 +374,7 @@
                         _playerTableData: [],
                         _BaseTableData: [],
                         _players: new Map(),
+                        _allianceData: null,
                   
                         // Create the window
                         _createWindow: function() {
@@ -590,6 +632,259 @@
                     
                             this._win.add(tabView, { left: 10, top: 10, right: 10, bottom: 10 });
                         },
+
+                        _getAllianceInfo: async function() {
+                            this._allianceData = new AllianceData();
+                            var alliance = ClientLib.Data.MainData.GetInstance().get_Alliance();
+
+                            this._allianceData.numPlayers = alliance.get_NumMembers();
+
+                            this._allianceData.tiberiumBonus = alliance.get_POITiberiumBonus();
+                            this._allianceData.tiberiumRank = ClientLib.Data.MainData.GetInstance().get_Alliance().get_POIRankScore()[ClientLib.Base.EPOIType.TiberiumBonus - ClientLib.Base.EPOIType.RankedTypeBegin];
+                            
+                            this._allianceData.crystalBonus = alliance.get_POICrystalBonus();
+                            this._allianceData.crystalRank = ClientLib.Data.MainData.GetInstance().get_Alliance().get_POIRankScore()[ClientLib.Base.EPOIType.CrystalBonus - ClientLib.Base.EPOIType.RankedTypeBegin];
+                            
+                            this._allianceData.powerBonus = alliance.get_POIPowerBonus();
+                            this._allianceData.powerRank = ClientLib.Data.MainData.GetInstance().get_Alliance().get_POIRankScore()[ClientLib.Base.EPOIType.PowerBonus - ClientLib.Base.EPOIType.RankedTypeBegin];
+                            
+                            this._allianceData.infantryBonus = alliance.get_POIInfantryBonus();
+                            this._allianceData.infantryRank = ClientLib.Data.MainData.GetInstance().get_Alliance().get_POIRankScore()[ClientLib.Base.EPOIType.InfanteryBonus - ClientLib.Base.EPOIType.RankedTypeBegin];
+                            
+                            this._allianceData.vehicleBonus = alliance.get_POIVehicleBonus();
+                            this._allianceData.vehicleRank = ClientLib.Data.MainData.GetInstance().get_Alliance().get_POIRankScore()[ClientLib.Base.EPOIType.VehicleBonus - ClientLib.Base.EPOIType.RankedTypeBegin];
+                            
+                            this._allianceData.airBonus = alliance.get_POIAirBonus();
+                            this._allianceData.airRank = ClientLib.Data.MainData.GetInstance().get_Alliance().get_POIRankScore()[ClientLib.Base.EPOIType.AirBonus - ClientLib.Base.EPOIType.RankedTypeBegin];
+                            
+                            this._allianceData.defenseBonus = alliance.get_POIDefenseBonus();
+                            this._allianceData.defenseRank = ClientLib.Data.MainData.GetInstance().get_Alliance().get_POIRankScore()[ClientLib.Base.EPOIType.DefenseBonus - ClientLib.Base.EPOIType.RankedTypeBegin];
+
+                            var num = -1;
+							var tibArr = [];
+							var poiSorceHolder = [];
+
+                            for (var key in ClientLib.Data.MainData.GetInstance().get_Alliance().get_OwnedPOIs()) {
+								var obj = ClientLib.Data.MainData.GetInstance().get_Alliance().get_OwnedPOIs()[key];
+								tibArr[num] = obj;
+
+                                var poi = new Bonus;
+
+                                poi.level = obj.l;
+                                poi.x = obj.x;
+                                poi.y = obj.y;
+                                poi.type = obj.t;
+                                poi.amount = null;
+
+                                num++;
+                                poiSorceHolder[num] = ClientLib.Base.PointOfInterestTypes.GetScoreByLevel(obj.l);
+                                
+                                if (num >= 0) {
+                                    var allianceId = ClientLib.Data.MainData.GetInstance().get_Alliance().get_Id();
+                                    var selectedPoiScore = ClientLib.Base.PointOfInterestTypes.GetScoreByLevel(obj.l);
+                                    var poiType = ClientLib.Base.PointOfInterestTypes.GetPOITypeFromWorldPOIType(this.convertPOIType(obj.t));
+                                    var poiRankScore = ClientLib.Data.MainData.GetInstance().get_Alliance().get_POIRankScore()[poiType - ClientLib.Base.EPOIType.RankedTypeBegin];
+                                    var allianceRank = poiRankScore.r;
+                                    var allianceScore = poiRankScore.s;
+                                    var nextAllianceScore = poiRankScore.ns;
+                                    var previousAllianceScore = poiRankScore.ps;
+                                    var bonusMultiplier = ClientLib.Data.MainData.GetInstance().get_Server().get_POIGlobalBonusFactor();
+                                    var currentTotalBonus = ClientLib.Base.PointOfInterestTypes.GetTotalBonusByType(poiType, allianceRank, allianceScore, bonusMultiplier);
+                                    
+                                    if (previousAllianceScore <= 0) {
+                                        // No rank multiplier; no loss by rank
+                                        poi.amount = currentTotalBonus - ClientLib.Base.PointOfInterestTypes.GetTotalBonusByType(poiType, allianceRank, allianceScore - selectedPoiScore, bonusMultiplier);
+                                    } else if (allianceScore - selectedPoiScore < previousAllianceScore) {
+                                        // gainOrLoss = currentTotalBonus - ClientLib.Base.PointOfInterestTypes.GetTotalBonusByType(poiType, allianceRank, allianceScore - selectedPoiScore, bonusMultiplier);
+                                        // Falling behind previous alliance; need to use rankings
+                                    } else {
+                                        // No loss by rank; if we end up with same score as previous alliance, our rank stays the same and they get same rank
+                                        poi.amount = currentTotalBonus - ClientLib.Base.PointOfInterestTypes.GetTotalBonusByType(poiType, allianceRank, allianceScore - selectedPoiScore, bonusMultiplier);
+                                    }
+
+                                    // Processing POI bonuses
+                                    if (poi.amount === null) {
+                                        try {
+                                            poi.amount = await this.fetchAndCalculateBonusWithRankingData(poi, poiType, allianceRank, allianceScore, selectedPoiScore, allianceId, allianceId);
+                                        } catch (error) {
+                                            console.error('Error fetching bonus:', error);
+                                        }
+                                    }
+
+                                    this._allianceData.addPOI(poi);
+
+                                }
+                            }
+                        },
+
+                        poiScoreLevel: function (nextScore, score, scoreByLevel) {
+							var poiDiff = nextScore - score;
+							for (var x = 0; x < 99; x++) {
+								var scoreFromX = scoreByLevel(x);
+								if (scoreFromX >= poiDiff) {
+									break;
+								}
+							}
+							return x;
+
+						},
+
+                        fetchAndCalculateBonusWithRankingData: function (poi, poiType, currentRank, currentScore, poiScore, allianceId, poiOwnerId) {
+                            return new Promise((resolve, reject) => {
+                                var context = {
+                                    poiType: poiType,
+                                    currentRank: currentRank,
+                                    currentScore: currentScore,
+                                    poiScore: poiScore,
+                                    allianceId: allianceId,
+                                    poiOwnerId: poiOwnerId,
+                                    poi: poi,
+                                    resolve: resolve,  // Pass resolve to the context
+                                    reject: reject     // Pass reject to the context
+                                };
+                        
+                                var PoiTypeToPoiRankingTypeMap = {};
+                                var PoiRankingTypeToSortColumnMap = {};
+                                PoiTypeToPoiRankingTypeMap[ClientLib.Base.EPOIType.TiberiumBonus] = ClientLib.Data.Ranking.ERankingType.BonusTiberium;
+                                PoiTypeToPoiRankingTypeMap[ClientLib.Base.EPOIType.CrystalBonus] = ClientLib.Data.Ranking.ERankingType.BonusCrystal;
+                                PoiTypeToPoiRankingTypeMap[ClientLib.Base.EPOIType.PowerBonus] = ClientLib.Data.Ranking.ERankingType.BonusPower;
+                                PoiTypeToPoiRankingTypeMap[ClientLib.Base.EPOIType.InfanteryBonus] = ClientLib.Data.Ranking.ERankingType.BonusInfantry;
+                                PoiTypeToPoiRankingTypeMap[ClientLib.Base.EPOIType.VehicleBonus] = ClientLib.Data.Ranking.ERankingType.BonusVehicles;
+                                PoiTypeToPoiRankingTypeMap[ClientLib.Base.EPOIType.AirBonus] = ClientLib.Data.Ranking.ERankingType.BonusAircraft;
+                                PoiTypeToPoiRankingTypeMap[ClientLib.Base.EPOIType.DefenseBonus] = ClientLib.Data.Ranking.ERankingType.BonusDefense;
+                        
+                                PoiRankingTypeToSortColumnMap[ClientLib.Data.Ranking.ERankingType.BonusTiberium] = ClientLib.Data.Ranking.ESortColumn.TiberiumScore;
+                                PoiRankingTypeToSortColumnMap[ClientLib.Data.Ranking.ERankingType.BonusCrystal] = ClientLib.Data.Ranking.ESortColumn.CrystalScore;
+                                PoiRankingTypeToSortColumnMap[ClientLib.Data.Ranking.ERankingType.BonusPower] = ClientLib.Data.Ranking.ESortColumn.PowerScore;
+                                PoiRankingTypeToSortColumnMap[ClientLib.Data.Ranking.ERankingType.BonusInfantry] = ClientLib.Data.Ranking.ESortColumn.InfantryScore;
+                                PoiRankingTypeToSortColumnMap[ClientLib.Data.Ranking.ERankingType.BonusVehicles] = ClientLib.Data.Ranking.ESortColumn.VehicleScore;
+                                PoiRankingTypeToSortColumnMap[ClientLib.Data.Ranking.ERankingType.BonusAircraft] = ClientLib.Data.Ranking.ESortColumn.AircraftScore;
+                                PoiRankingTypeToSortColumnMap[ClientLib.Data.Ranking.ERankingType.BonusDefense] = ClientLib.Data.Ranking.ESortColumn.DefenseScore;
+                        
+                                var lastMultiplierRank = Object.keys(ClientLib.Res.ResMain.GetInstance().GetGamedata().poibmbr).length;
+                                var rankingPoiType = PoiTypeToPoiRankingTypeMap[poiType];
+                                var sortColumn = PoiRankingTypeToSortColumnMap[rankingPoiType];
+                        
+                                ClientLib.Net.CommunicationManager.GetInstance().SendSimpleCommand('RankingGetData', {
+                                    firstIndex: 0,
+                                    lastIndex: lastMultiplierRank,
+                                    view: ClientLib.Data.Ranking.EViewType.Alliance,
+                                    rankingType: rankingPoiType,
+                                    sortColumn: sortColumn,
+                                    ascending: true,
+                                }, webfrontend.phe.cnc.Util.createEventDelegate(ClientLib.Net.CommandResult, this, this.onRankingGetData), context);
+                            });
+                        },
+                        
+                        onRankingGetData: function (context, results) {
+                            if (results === null) {
+                                context.reject("Failed to get results");
+                                return;  // Stop further execution if results are null
+                            }
+                        
+                            var allianceBonuses = results.a;
+                        
+                            // Remove own alliance from list and add missing scores
+                            for (var i = 0; i < allianceBonuses.length; i++) {
+                                if (allianceBonuses[i].a === context.allianceId) {
+                                    allianceBonuses.splice(i--, 1);
+                                } else if (allianceBonuses[i].pois === undefined) {
+                                    allianceBonuses[i].pois = 0;
+                                }
+                            }
+                        
+                            var isGain = context.poiOwnerId !== context.allianceId;
+                            var i;
+                        
+                            if (isGain && context.poiOwnerId !== webfrontend.gui.widgets.AllianceLabel.ESpecialNoAllianceName) {
+                                // Subtract POI score from current owner
+                                for (i = 0; i < allianceBonuses.length; i++) {
+                                    if (allianceBonuses[i].a === context.poiOwnerId) {
+                                        // Array can be safely modified after cloning
+                                        allianceBonuses = allianceBonuses.map(this.shallowClone);
+                                        allianceBonuses[i].pois -= context.poiScore;
+                        
+                                        allianceBonuses.sort(function (a, b) {
+                                            return b.pois - a.pois;
+                                        });
+                                        break;
+                                    }
+                                }
+                            }
+                        
+                            var newAllianceScore = context.currentScore + (isGain ? context.poiScore : -context.poiScore);
+                        
+                            for (i = 0; i < allianceBonuses.length; i++) {
+                                if (allianceBonuses[i].pois <= newAllianceScore) {
+                                    break;
+                                }
+                            }
+                        
+                            var bonusMultiplier = ClientLib.Data.MainData.GetInstance().get_Server().get_POIGlobalBonusFactor();
+                            var currentTotalBonus = ClientLib.Base.PointOfInterestTypes.GetTotalBonusByType(context.poiType, context.currentRank, context.currentScore, bonusMultiplier);
+                            var newTotalBonus = ClientLib.Base.PointOfInterestTypes.GetTotalBonusByType(context.poiType, i + 1, newAllianceScore, bonusMultiplier);
+                            var gainOrLoss = isGain ?
+                                newTotalBonus - currentTotalBonus :
+                                currentTotalBonus - newTotalBonus;
+                        
+                            context.resolve(gainOrLoss);
+                        },                        
+
+                        calculateBonus: function (context, allianceBonuses) {
+                            var isGain = context.poiOwnerId !== context.allianceId;
+                            var i;
+    
+                            if (isGain && context.poiOwnerId !== webfrontend.gui.widgets.AllianceLabel.ESpecialNoAllianceName) {
+                                // Subtract POI score from current owner
+                                for (i = 0; i < allianceBonuses.length; i++) {
+                                    if (allianceBonuses[i].a === context.poiOwnerId) {
+                                        // Array can be safely modified after cloning
+                                        allianceBonuses = allianceBonuses.map(this.shallowClone);
+                                        allianceBonuses[i].pois -= context.poiScore;
+    
+                                        allianceBonuses.sort(function (a, b) {
+                                            return b.pois - a.pois;
+                                        });
+                                        break;
+                                    }
+                                }
+                            }
+    
+                            var newAllianceScore = context.currentScore + (isGain ? context.poiScore : -context.poiScore);
+    
+                            for (i = 0; i < allianceBonuses.length; i++) {
+                                if (allianceBonuses[i].pois <= newAllianceScore) {
+                                    break;
+                                }
+                            }
+                            var bonusMultiplier = ClientLib.Data.MainData.GetInstance().get_Server().get_POIGlobalBonusFactor();
+                            var currentTotalBonus = ClientLib.Base.PointOfInterestTypes.GetTotalBonusByType(context.poiType, context.currentRank, context.currentScore, bonusMultiplier);
+                            var newTotalBonus = ClientLib.Base.PointOfInterestTypes.GetTotalBonusByType(context.poiType, i + 1, newAllianceScore, bonusMultiplier);
+                            var gainOrLoss = isGain ?
+                                newTotalBonus - currentTotalBonus :
+                                currentTotalBonus - newTotalBonus;
+                                
+                            context.poi.amount = gainOrLoss;
+                        },
+
+                        convertPOIType: function(n) {
+                            switch (n) {
+                                case ClientLib.Base.EPOIType.TiberiumBonus:
+                                    return ClientLib.Data.WorldSector.WorldObjectPointOfInterest.EPOIType.TiberiumMine;
+                                case ClientLib.Base.EPOIType.CrystalBonus:
+                                    return ClientLib.Data.WorldSector.WorldObjectPointOfInterest.EPOIType.CrystalMine;
+                                case ClientLib.Base.EPOIType.PowerBonus:
+                                    return ClientLib.Data.WorldSector.WorldObjectPointOfInterest.EPOIType.PowerVortex;
+                                case ClientLib.Base.EPOIType.InfanteryBonus:
+                                    return ClientLib.Data.WorldSector.WorldObjectPointOfInterest.EPOIType.Infantery;
+                                case ClientLib.Base.EPOIType.VehicleBonus:
+                                    return ClientLib.Data.WorldSector.WorldObjectPointOfInterest.EPOIType.Vehicle;
+                                case ClientLib.Base.EPOIType.AirBonus:
+                                    return ClientLib.Data.WorldSector.WorldObjectPointOfInterest.EPOIType.Air;
+                                case ClientLib.Base.EPOIType.DefenseBonus:
+                                    return ClientLib.Data.WorldSector.WorldObjectPointOfInterest.EPOIType.Defense;
+                            }
+                        },
                     
                         sendBases: function() {
                             console.log("Send button clicked");
@@ -614,8 +909,6 @@
                         
                         // PLAYER INFO
                         getPlayers: async function() {
-                            console.log(ClientLib.Data.MainData.GetInstance().get_Alliance());
-                            console.log("get_POITiberiumBonus: ", ClientLib.Data.MainData.GetInstance().get_Alliance().get_POITiberiumBonus())
                             this._numPlayers = ClientLib.Data.MainData.GetInstance().get_Alliance().get_NumMembers();
                             let members = ClientLib.Data.MainData.GetInstance().get_Alliance().get_MemberDataAsArray();
 
@@ -655,6 +948,12 @@
                                 player.Role = member["Role"];
                                 player.RoleName = member["RoleName"];
                                 player.VeteranPointContribution = member["VeteranPointContribution"];
+
+                                if ( member["Faction"] == 1) {
+                                    this._allianceData.numGDI += 1;
+                                } else {
+                                    this._allianceData.numNod += 1;
+                                }
                             
                                 try {
                                     let publicPlayerData = await getPublicPlayerInfo(player.Name);
@@ -663,6 +962,7 @@
                                     player.PvP = publicPlayerData.bd - publicPlayerData.bde;
                                     player.PvE = publicPlayerData.bde;
                                     this._numBases += player.NumBases;
+                                    this._allianceData.numBases += player.NumBases;
                                 } catch (error) {
                                     console.error(`Failed to fetch data for player ${player.Name}: ${error}`);
                                 }
