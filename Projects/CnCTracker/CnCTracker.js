@@ -90,6 +90,14 @@
                 get vehicleRank() { return this.__vehicleRank; }
                 get airRank() { return this.__airRank; }
                 get defenseRank() { return this.__defenseRank; }
+
+                increaseGDI() {
+                    this.__numGDI += 1;
+                }
+
+                increaseNOD() {
+                    this.__numNod += 1;
+                }
             
                 // Method to add a POI
                 addPOI(bonus) {
@@ -342,6 +350,42 @@
                 }
             }
 
+            class AllianceRankingData {
+                constructor(allianceID, allianceName, allianceWon, baseCount, playerCount, rank, top40Score, averageScore, totalScore) {
+                    this._allianceID = allianceID;
+                    this._allianceName = allianceName;
+                    this._allianceWon = allianceWon;
+                    this._baseCount = baseCount;
+                    this._playerCount = playerCount;
+                    this._rank = rank;
+                    this._top40Score = top40Score;
+                    this._averageScore = averageScore;
+                    this._totalScore = totalScore;
+                }
+            
+                // Getters
+                get allianceID() { return this._allianceID; }
+                get allianceName() { return this._allianceName; }
+                get allianceWon() { return this._allianceWon; }
+                get baseCount() { return this._baseCount; }
+                get playerCount() { return this._playerCount; }
+                get rank() { return this._rank; }
+                get top40Score() { return this._top40Score; }
+                get averageScore() { return this._averageScore; }
+                get totalScore() { return this._totalScore; }
+            
+                // Setters
+                set allianceID(value) { this._allianceID = value; }
+                set allianceName(value) { this._allianceName = value; }
+                set allianceWon(value) { this._allianceWon = value; }
+                set baseCount(value) { this._baseCount = value; }
+                set playerCount(value) { this._playerCount = value; }
+                set rank(value) { this._rank = value; }
+                set top40Score(value) { this._top40Score = value; }
+                set averageScore(value) { this._averageScore = value; }
+                set totalScore(value) { this._totalScore = value; }
+            }
+
             // This function defines and creates the necessary classes for the menu buttons
             function createClasses() {
                 qx.Class.define("myApp.TableManager", {
@@ -353,8 +397,9 @@
                       this._createButtons();
                       this._createProgressBar();
                       this._createTabView();
-                      this._getAllianceInfo()
-                      this.drawTables(); // Initialize with default entries
+                      this._getAllianceRanking();
+                      this._getAllianceInfo();
+                    //   this.drawTables(); // Initialize with default entries
                     },
                   
                     members: {
@@ -375,6 +420,7 @@
                         _BaseTableData: [],
                         _players: new Map(),
                         _allianceData: null,
+                        _allianceRankingData: null,
                   
                         // Create the window
                         _createWindow: function() {
@@ -633,6 +679,47 @@
                             this._win.add(tabView, { left: 10, top: 10, right: 10, bottom: 10 });
                         },
 
+                        _getAllianceRanking: async function() {
+                            try {
+                                console.log("ClientLib.Data.Ranking.RankingReceivedAllianceData: ", ClientLib.Data.Ranking.RankingReceivedAllianceData());
+                                console.log("ClientLib.Data.Ranking.EViewType.Alliance: ", ClientLib.Data.Ranking.EViewType.Alliance);
+                        
+                                return new Promise((resolve, reject) => {
+                                    ClientLib.Net.CommunicationManager.GetInstance().SendSimpleCommand(
+                                        'RankingGetData',
+                                        {
+                                            firstIndex: 0,
+                                            lastIndex: 99,
+                                            view: 1,
+                                            rankingType: 0,
+                                            sortColumn: 2,
+                                            ascending: 1,
+                                            searchValue: "",
+                                        },
+                                        webfrontend.phe.cnc.Util.createEventDelegate(
+                                            ClientLib.Net.CommandResult,
+                                            this,
+                                            async function(context, results) {
+                                                try {
+                                                    const allianceData = await this.onRankingGetDataAlliance(context, results);
+                                                    // Resolve the main promise with the alliance data
+                                                    resolve(allianceData);
+                                                } catch (error) {
+                                                    // Handle any errors in `onRankingGetDataAlliance`
+                                                    reject(error);
+                                                }
+                                            }.bind(this) // Bind `this` to ensure the correct context
+                                        ),
+                                        null
+                                    );
+                                });
+                            } catch (error) {
+                                console.error("Error in _getAllianceRanking: ", error);
+                                throw error;
+                            }
+                        },
+                        
+
                         _getAllianceInfo: async function() {
                             this._allianceData = new AllianceData();
                             var alliance = ClientLib.Data.MainData.GetInstance().get_Alliance();
@@ -775,6 +862,38 @@
                                 }, webfrontend.phe.cnc.Util.createEventDelegate(ClientLib.Net.CommandResult, this, this.onRankingGetData), context);
                             });
                         },
+
+                        onRankingGetDataAlliance: async function(context, results) {
+                            return new Promise((resolve, reject) => {
+                                try {
+                                    const alliances = results.a.map(item => new AllianceRankingData(
+                                        item.a,     // AllianceID
+                                        item.an,    // AllianceName
+                                        item.aw,    // AllianceWon
+                                        item.bc,    // BaseCount
+                                        item.pc,    // PlayerCount
+                                        item.r,     // Rank
+                                        item.s,     // Top40Score
+                                        item.sa,    // AverageScore
+                                        item.sc     // TotalScore
+                                    ));
+                        
+                                    this._allianceRankingData = alliances;
+                        
+                                    // Example: Printing details of all alliances
+                                    // alliances.forEach(alliance => {
+                                    //     console.log(`Alliance: ${alliance.allianceName}, Rank: ${alliance.rank}`);
+                                    // });
+                        
+                                    // Resolve with the alliances
+                                    resolve(this._allianceRankingData);
+                                } catch (error) {
+                                    // Reject the promise in case of an error
+                                    reject(error);
+                                }
+                            });
+                        },
+                        
                         
                         onRankingGetData: function (context, results) {
                             if (results === null) {
@@ -949,10 +1068,12 @@
                                 player.RoleName = member["RoleName"];
                                 player.VeteranPointContribution = member["VeteranPointContribution"];
 
+                                console.log(member);
+
                                 if ( member["Faction"] == 1) {
-                                    this._allianceData.numGDI += 1;
+                                    this._allianceData.increaseGDI();
                                 } else {
-                                    this._allianceData.numNod += 1;
+                                    this._allianceData.increaseNOD();
                                 }
                             
                                 try {

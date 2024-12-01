@@ -22,6 +22,7 @@ To fix:
 - [] Load base when click on base name
 - [x] Get all bonuses (based on current level)
 - [x] Get all POIs (x,y,level,amount,type)
+- [x] Get last login for players
 - [] Get a comprehensive list of all the challenges/quests
 - [] Is Base holding a POI
-- [] Get all alliance ranking (that way we can plot it and see if we are improving quicker or slower)
+- [x] Get all alliance ranking (that way we can plot it and see if we are improving quicker or slower)
