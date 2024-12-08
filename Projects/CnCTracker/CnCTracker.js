@@ -6,7 +6,14 @@
 // @grant       none
 // ==/UserScript==
 
+
 (function () {
+
+    // Create a <script> element to load the js-yaml library from a CDN
+    var yamlScript = document.createElement("script");
+    yamlScript.src = "https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js";
+    document.head.appendChild(yamlScript);
+
     // Create a <script> element that will inject the script into the webpage
     var script = document.createElement("script");
     script.textContent = "(" +
@@ -107,6 +114,30 @@
                         throw new Error("Invalid Bonus object");
                     }
                 }
+
+                getData() {
+                    return {
+                        numPlayers: this.__numPlayers,
+                        numBases: this.__numBases,
+                        numNod: this.__numNod,
+                        numGDI: this.__numGDI,
+                        pois: this.__pois,
+                        tiberiumBonus: this.__tiberiumBonus,
+                        crystalBonus: this.__crystalBonus,
+                        powerBonus: this.__powerBonus,
+                        infantryBonus: this.__infantryBonus,
+                        vehicleBonus: this.__vehicleBonus,
+                        airBonus: this.__airBonus,
+                        defenseBonus: this.__defenseBonus,
+                        tiberiumRank: this.__tiberiumRank,
+                        crystalRank: this.__crystalRank,
+                        powerRank: this.__powerRank,
+                        infantryRank: this.__infantryRank,
+                        vehicleRank: this.__vehicleRank,
+                        airRank: this.__airRank,
+                        defenseRank: this.__defenseRank
+                    };
+                }
             }                     
             
             // Helper class for Bonus type
@@ -132,6 +163,16 @@
                 get level() { return this.__level; }
                 get x() { return this.__x; }
                 get y() { return this.__y; }
+
+                getData() {
+                    return {
+                        type: this.__type,
+                        amount: this.__amount,
+                        level: this.__level,
+                        x: this.__x,
+                        y: this.__y
+                    };
+                }
             }
 
             // Define the Base class (assuming it's something like this)
@@ -159,6 +200,7 @@
                     this.__factoryRepairTime = null;
                     this.__airfieldRepairTime = null;
                     this.__barracksRepairTime = null;
+                    this.__worstRepairTime = null;
                     this.__supportWeapon = null;
                     this.__supportWeaponLevel = null;
                     this.__offensiveLevel = null;
@@ -194,6 +236,7 @@
                 set FactoryRepairTime(value) { this.__factoryRepairTime = value; }
                 set AirfieldRepairTime(value) { this.__airfieldRepairTime = value; }
                 set BarracksRepairTime(value) { this.__barracksRepairTime = value; }
+                set WorstRepairTime(value) { this.__worstRepairTime = value; }
                 set SupportWeapon(value) { this.__supportWeapon = value; }
                 set SupportWeaponLevel(value) { this.__supportWeaponLevel = value; }
                 set OffensiveLevel(value) { this.__offensiveLevel = value; }
@@ -228,6 +271,7 @@
                 get FactoryRepairTime() { return this.__factoryRepairTime; }
                 get AirfieldRepairTime() { return this.__airfieldRepairTime; }
                 get BarracksRepairTime() { return this.__barracksRepairTime; }
+                get WorstRepairTime() { return this.__worstRepairTime; }
                 get SupportWeapon() { return this.__supportWeapon; }
                 get SupportWeaponLevel() { return this.__supportWeaponLevel; }
                 get OffensiveLevel() { return this.__offensiveLevel; }
@@ -238,6 +282,44 @@
                 get IsProtected() { return this.__isProtected; }
                 get BaseResourceLayout() { return this.__baseResourceLayout; }
                 get BaseBuildingLayout() { return this.__baseBuildingLayout; }
+
+                getData() {
+                    return {
+                        id: this.__id,
+                        baseNum: this.__baseNum,
+                        owner: this.__owner,
+                        name: this.__name,
+                        score: this.__score,
+                        x: this.__x,
+                        y: this.__y,
+                        faction: this.__faction,
+                        tiberiumPackage: this.__tiberiumPackage,
+                        tiberiumContinuous: this.__tiberiumContinuous,
+                        tiberiumMaxStorage: this.__tiberiumMaxStorage,
+                        crystalPackage: this.__crystalPackage,
+                        crystalContinuous: this.__crystalContinuous,
+                        crystalMaxStorage: this.__crystalMaxStorage,
+                        powerPackage: this.__powerPackage,
+                        powerContinuous: this.__powerContinuous,
+                        powerMaxStorage: this.__powerMaxStorage,
+                        creditPackage: this.__creditPackage,
+                        creditContinuous: this.__creditContinuous,
+                        factoryRepairTime: this.__factoryRepairTime,
+                        airfieldRepairTime: this.__airfieldRepairTime,
+                        barracksRepairTime: this.__barracksRepairTime,
+                        worstRepairTime: this.__worstRepairTime,
+                        supportWeapon: this.__supportWeapon,
+                        supportWeaponLevel: this.__supportWeaponLevel,
+                        offensiveLevel: this.__offensiveLevel,
+                        defensiveLevel: this.__defensiveLevel,
+                        baseLevel: this.__baseLevel,
+                        numBuildings: this.__numBuildings,
+                        numUnitLimitOffense: this.__numUnitLimitOffense,
+                        isProtected: this.__isProtected,
+                        baseResourceLayout: this.__baseResourceLayout,
+                        baseBuildingLayout: this.__baseBuildingLayout
+                    };
+                }
             }
             
 
@@ -266,11 +348,14 @@
                     this.__RoleName = null;
                     this.__VeteranPointContribution = null;
                     this.__Bases = [];
-
-
+                    this.__TotalTiberium = 0;
+                    this.__TotalCrystal = 0;
+                    this.__TotalPower = 0;
+                    this.__TotalCredits = 0;
+            
                     this.__PublicPlayerInfoByName = null;
                 }
-
+            
                 // Setters
                 set AvgDefenseLvl(value) { this.__AvgDefenseLvl = value; }
                 set AvgOffenseLvl(value) { this.__AvgOffenseLvl = value; }
@@ -294,16 +379,20 @@
                 set RoleName(value) { this.__RoleName = value; }
                 set VeteranPointContribution(value) { this.__VeteranPointContribution = value; }
                 set PublicPlayerInfoByName(value) { this.__PublicPlayerInfoByName = value; }
-                
+                set TotalTiberium(value) { this.__TotalTiberium = value; }
+                set TotalCrystal(value) { this.__TotalCrystal = value; }
+                set TotalPower(value) { this.__TotalPower = value; }
+                set TotalCredits(value) { this.__TotalCredits = value; }
+            
                 // Bases-related Setters
-                set Bases(bases) { 
+                set Bases(bases) {
                     if (Array.isArray(bases) && bases.every(base => base instanceof Base)) {
-                        this.__Bases = bases; 
+                        this.__Bases = bases;
                     } else {
                         throw new Error("Invalid input: bases must be an array of Base instances.");
                     }
                 }
-
+            
                 addBase(base) {
                     if (base instanceof Base) {
                         this.__Bases.push(base);
@@ -311,11 +400,43 @@
                         throw new Error("Invalid input: base must be an instance of Base.");
                     }
                 }
-
+            
                 removeBase(baseId) {
                     this.__Bases = this.__Bases.filter(base => base.id !== baseId);
                 }
-
+            
+                getData() {
+                    return {
+                        AvgDefenseLvl: this.__AvgDefenseLvl,
+                        AvgOffenseLvl: this.__AvgOffenseLvl,
+                        NumBases: this.__NumBases,
+                        NumBasesDestroyed: this.__NumBasesDestroyed,
+                        PvP: this.__PvP,
+                        PvE: this.__PvE,
+                        BestDefenseLvl: this.__BestDefenseLvl,
+                        BestOffenseLvl: this.__BestOffenseLvl,
+                        Faction: this.FactionToName(this.__Faction),
+                        HasControlHubCode: this.__HasControlHubCode,
+                        Id: this.__Id,
+                        JoinStep: this.__JoinStep,
+                        LastSeen: this.__LastSeen,
+                        Level: this.__Level,
+                        Name: this.__Name,
+                        OnlineState: this.__OnlineState,
+                        Points: this.__Points,
+                        Rank: this.__Rank,
+                        Role: this.__Role,
+                        RoleName: this.__RoleName,
+                        VeteranPointContribution: this.__VeteranPointContribution,
+                        TotalTiberium: this.__TotalTiberium,
+                        TotalCrystal: this.__TotalCrystal,
+                        TotalPower: this.__TotalPower,
+                        TotalCredits: this.__TotalCredits,
+                        // PublicPlayerInfoByName: this.__PublicPlayerInfoByName,
+                        // Bases: this.__Bases.map(base => base.getData())
+                    };
+                }
+            
                 // Getters
                 get AvgDefenseLvl() { return this.__AvgDefenseLvl; }
                 get AvgOffenseLvl() { return this.__AvgOffenseLvl; }
@@ -339,16 +460,20 @@
                 get RoleName() { return this.__RoleName; }
                 get VeteranPointContribution() { return this.__VeteranPointContribution; }
                 get PublicPlayerInfoByName() { return this.__PublicPlayerInfoByName; }
-
+                get TotalTiberium() { return this.__TotalTiberium; }
+                get TotalCrystal() { return this.__TotalCrystal; }
+                get TotalPower() { return this.__TotalPower; }
+                get TotalCredits() { return this.__TotalCredits; }
+            
                 // Getter for bases
                 get Bases() {
                     return this.__Bases;
                 }
-
+            
                 FactionToName(val) {
                     return val == 1 ? "GDI" : "NOD";
                 }
-            }
+            }            
 
             class AllianceRankingData {
                 constructor(allianceID, allianceName, allianceWon, baseCount, playerCount, rank, top40Score, averageScore, totalScore) {
@@ -384,6 +509,20 @@
                 set top40Score(value) { this._top40Score = value; }
                 set averageScore(value) { this._averageScore = value; }
                 set totalScore(value) { this._totalScore = value; }
+
+                getData() {
+                    return {
+                        allianceID: this._allianceID,
+                        allianceName: this._allianceName,
+                        allianceWon: this._allianceWon,
+                        baseCount: this._baseCount,
+                        playerCount: this._playerCount,
+                        rank: this._rank,
+                        top40Score: this._top40Score,
+                        averageScore: this._averageScore,
+                        totalScore: this._totalScore
+                    };
+                }
             }
 
             // This function defines and creates the necessary classes for the menu buttons
@@ -394,8 +533,7 @@
                     construct: function() {
                       this._createWindow();
                       this._createTables();
-                      this._createButtons();
-                      this._createProgressBar();
+                      this._createUI();
                       this._createTabView();
                       this._getAllianceRanking();
                       this._getAllianceInfo();
@@ -410,6 +548,7 @@
                         _baseTableModel: null,
                         _progressBar: null,
                         _progressLabel: null,
+                        _numBasesToScan: null,
                         _baseProgressBar: null,
                         _baseProgressLabel: null,
                         _numPlayers: 50,
@@ -418,6 +557,8 @@
                         _numbasesScanned: 0,
                         _playerTableData: [],
                         _BaseTableData: [],
+
+                        _bases: [],
                         _players: new Map(),
                         _allianceData: null,
                         _allianceRankingData: null,
@@ -453,7 +594,11 @@
                                 "PvP",
                                 "PvE",                               
                                 "Best Offense Level", 
-                                "Best Defense Level"
+                                "Best Defense Level",
+                                "Total Tiberium",
+                                "Total Crystal",
+                                "Total Power",
+                                "Total Credits"
                             ]);
                             this._playerTable.setTableModel(this._playerTableModel);
                     
@@ -479,6 +624,7 @@
                                 "Factory Repair Time", 
                                 "Airfield Repair Time", 
                                 "Barracks Repair Time", 
+                                "Worst Repair Time",
                                 "Support Weapon", 
                                 "Support Weapon Level", 
                                 "Offensive Level", 
@@ -521,12 +667,10 @@
                         updatePlayerData: function() {
                             this._playerTableData = [];
 
-                            // Use a traditional for-loop to iterate through the players map or object
-                            for (let id in this._players) {
-                                if (this._players.hasOwnProperty(id)) {  // Ensure the property is a player's property
-                                    let player = this._players[id];
+                            // Players: Collect data from _players (Map)
+                            if (this._players instanceof Map) {
+                                this._players.forEach((player) => {
 
-                                    // Push the player's data into the tableData array
                                     this._playerTableData.push([
                                         player.Rank,
                                         player.Name,
@@ -537,9 +681,14 @@
                                         player.PvE,
                                         player.BestOffenseLvl,
                                         player.BestDefenseLvl,
+                                        player.TotalTiberium,
+                                        player.TotalCrystal,
+                                        player.TotalPower,
+                                        player.TotalCredits,
                                     ]);
-                                }
+                                });
                             }
+
                             this.drawTables(); // Redraw the tables
                         },
 
@@ -567,98 +716,115 @@
                             this.drawTables(); // Redraw the tables
                         },
                     
-                        // Create buttons and add them to the UI
-                        _createButtons: function() {
-                            let container = new qx.ui.container.Composite(new qx.ui.layout.HBox(10)); // 10px spacing
-                    
-                            // Get Bases button
+                        // Create buttons, progress bars, and dropdown menu
+                        _createUI: function() {
+                            // Main vertical container
+                            let mainContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(20)); // 20px vertical spacing
+                        
+                            // Create buttons and dropdown container
+                            let topContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox(10)); // 10px horizontal spacing
+  
+                            let getPlayersButton = new qx.ui.form.Button("Get Players");
+                            getPlayersButton.addListener("execute", function() {
+                                this.getPlayers(); // Placeholder function
+                            }, this);
+                        
+  
                             let getBasesButton = new qx.ui.form.Button("Get Bases");
                             getBasesButton.addListener("execute", function() {
-                            this.getBases(); // Placeholder function, replace with actual logic
+                                this.getBases(); // Placeholder function
                             }, this);
-                    
-                            // Send button
+                        
                             let sendButton = new qx.ui.form.Button("Send");
                             sendButton.addListener("execute", function() {
-                                this.sendBases(); // Placeholder function, replace with actual logic
+                                this.sendBases(); // Placeholder function
                             }, this);
-                    
-                            container.add(getBasesButton);
-                            container.add(sendButton);
-                    
-                            this._win.add(container);
-                        },
-                    
-                        // Create progress bar and label
-                        _createProgressBar: function() {
-                            // Create a container to hold both progress bars
-                            let mainContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox(10)); // Horizontal layout with a 10px gap between bars
                         
-                            // First progress bar container (for players)
+                            // Create numBasesToScan menu
+                            let numBasesToScanLabel = new qx.ui.basic.Label("Select Range:"); // Label for numBasesToScan
+                            numBasesToScan = new qx.ui.form.SelectBox();
+                        
+                            // Populate numBasesToScan with numbers from 1 to x
+                            for (let i = 1; i <= this._numPlayers; i++) {
+                                let listItem = new qx.ui.form.ListItem(i.toString());
+                                numBasesToScan.add(listItem);
+                            }
+                        
+                            // Add buttons and dropdown to the top container
+                            topContainer.add(getPlayersButton);
+                            topContainer.add(getBasesButton);
+                            topContainer.add(sendButton);
+                            topContainer.add(numBasesToScanLabel);
+                            topContainer.add(numBasesToScan);
+                        
+                            // Create progress bars container (side by side)
+                            let progressBarContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox(10)); // 10px horizontal spacing
+                        
+                            // Player progress bar
                             let playerProgressBarContainer = new qx.ui.container.Composite(new qx.ui.layout.Canvas());
                             playerProgressBarContainer.set({
-                                width: 300,          // Fixed width of the container
-                                minWidth: 300,       // Minimum width to prevent resizing
-                                maxWidth: 300,       // Maximum width to prevent resizing
+                                width: 300,
                                 height: 20,
                                 decorator: new qx.ui.decoration.Decorator().set({
                                     backgroundColor: "red"
                                 })
                             });
                         
-                            // Green bar inside the red container (for players)
                             this._progressBar = new qx.ui.core.Widget().set({
-                                width: 0,         // Initial width for the progress bar
+                                width: 0,
                                 height: 30,
                                 backgroundColor: "green"
                             });
                             playerProgressBarContainer.add(this._progressBar, { left: 0, top: 0 });
                         
-                            // Progress text label (e.g., "0 / 50") for players
                             this._progressLabel = new qx.ui.basic.Label("0 / 50");
-                            playerProgressBarContainer.add(this._progressLabel, { left: "50%", top: "10%", zIndex: 10 });
                             this._progressLabel.set({
                                 textColor: "white",
                                 alignX: "center",
                                 alignY: "middle"
                             });
+                            playerProgressBarContainer.add(this._progressLabel, { left: "50%", top: "10%", zIndex: 10 });
                         
-                            // Second progress bar container (for bases)
+                            // Base progress bar
                             let baseProgressBarContainer = new qx.ui.container.Composite(new qx.ui.layout.Canvas());
                             baseProgressBarContainer.set({
-                                width: 300,          // Fixed width of the container
-                                minWidth: 300,       // Minimum width to prevent resizing
-                                maxWidth: 300,       // Maximum width to prevent resizing
+                                width: 300,
                                 height: 20,
                                 decorator: new qx.ui.decoration.Decorator().set({
-                                    backgroundColor: "red"  // Different background color for distinction
+                                    backgroundColor: "red"
                                 })
                             });
                         
-                            // Green bar inside the blue container (for bases)
                             this._baseProgressBar = new qx.ui.core.Widget().set({
-                                width: 0,         // Initial width for the progress bar
+                                width: 0,
                                 height: 30,
                                 backgroundColor: "green"
                             });
                             baseProgressBarContainer.add(this._baseProgressBar, { left: 0, top: 0 });
                         
-                            // Progress text label (e.g., "0 / 100") for bases
                             this._baseProgressLabel = new qx.ui.basic.Label("0 / 100");
-                            baseProgressBarContainer.add(this._baseProgressLabel, { left: "50%", top: "10%", zIndex: 10 });
                             this._baseProgressLabel.set({
                                 textColor: "white",
                                 alignX: "center",
                                 alignY: "middle"
                             });
+                            baseProgressBarContainer.add(this._baseProgressLabel, { left: "50%", top: "10%", zIndex: 10 });
                         
-                            // Add both progress bar containers to the main container
-                            mainContainer.add(playerProgressBarContainer);
-                            mainContainer.add(baseProgressBarContainer);
+                            // Add both progress bars to the progress bar container
+                            progressBarContainer.add(playerProgressBarContainer);
+                            progressBarContainer.add(baseProgressBarContainer);
+                        
+                            // Add spacer for extra space below progress bars
+                            let spacer = new qx.ui.core.Spacer(null, 20); // Spacer with 20px height
+                        
+                            // Add all components to the main container
+                            mainContainer.add(topContainer); // Buttons and dropdown (on the same line)
+                            mainContainer.add(progressBarContainer); // Progress bars (on the same line)
+                            mainContainer.add(spacer); // Add extra space below progress bars
                         
                             // Add the main container to the window
                             this._win.add(mainContainer);
-                        },                        
+                        },                                                                     
                     
                         // Create TabView to hold multiple tables
                         _createTabView: function() {
@@ -681,9 +847,6 @@
 
                         _getAllianceRanking: async function() {
                             try {
-                                console.log("ClientLib.Data.Ranking.RankingReceivedAllianceData: ", ClientLib.Data.Ranking.RankingReceivedAllianceData());
-                                console.log("ClientLib.Data.Ranking.EViewType.Alliance: ", ClientLib.Data.Ranking.EViewType.Alliance);
-                        
                                 return new Promise((resolve, reject) => {
                                     ClientLib.Net.CommunicationManager.GetInstance().SendSimpleCommand(
                                         'RankingGetData',
@@ -1007,24 +1170,58 @@
                     
                         sendBases: function() {
                             console.log("Send button clicked");
-                            
-                            const data = {
-                                playerTableData: this._playerTableData,
-                                baseTableData: this._BaseTableData
+
+                            // Construct the overall JSON object
+                            const combinedData = {
+                                Players: [],
+                                Bases: [],
+                                AllianceData: {},
+                                AllianceRanking: []
                             };
 
-                            console.log(data);
+                            // Players: Collect data from _players (Map)
+                            if (this._players instanceof Map) {
+                                this._players.forEach((player) => {
+                                    combinedData.Players.push(player.getData());
+                                });
+                            }
 
+                            // Bases: Collect data from _bases
+                            if (this._bases && Array.isArray(this._bases)) {
+                                this._bases.forEach(base => {
+                                    combinedData.Bases.push(base.getData());
+                                });
+                            }
+
+                            // Alliance Data: Collect from _allianceData
+                            if (this._allianceData && typeof this._allianceData.getData === 'function') {
+                                combinedData.AllianceData = this._allianceData.getData();
+                            }
+
+                            // Alliance Rankings: Collect from _allianceRankingData
+                            if (this._allianceRankingData && Array.isArray(this._allianceRankingData)) {
+                                this._allianceRankingData.forEach(alliance => {
+                                    combinedData.AllianceRanking.push(alliance.getData());
+                                });
+                            }
+
+                            // Convert the combined data to JSON
+                            const jsonData = JSON.stringify(combinedData);
+
+                            console.log(jsonData);
+                        
+                            // Sending the JSON data as an example
                             // fetch('https://your-website.com/receiveData.php', {
                             //     method: 'POST',
                             //     headers: {
-                            //       'Content-Type': 'application/json',
+                            //         'Content-Type': 'application/json',
                             //     },
-                            //     body: JSON.stringify(data),
-                            //   }).then(response => response.json())
-                            //     .then(result => console.log('Data sent successfully:', result))
-                            //     .catch(error => console.error('Error sending data:', error));
-                        },
+                            //     body: JSON.stringify(playerDataArray),
+                            // })
+                            // .then(response => response.json())
+                            // .then(result => console.log('Data sent successfully:', result))
+                            // .catch(error => console.error('Error sending data:', error));
+                        },                        
                         
                         // PLAYER INFO
                         getPlayers: async function() {
@@ -1047,67 +1244,78 @@
                                 });
                             };
 
-                            for (let member of members) {
-                                let player = new Player();
-                                player.AvgDefenseLvl = member["AvgDefenseLvl"];
-                                player.AvgOffenseLvl = member["AvgOffenseLvl"];
-                                player.NumBases = member["Bases"];
-                                player.BestDefenseLvl = member["BestDefenseLvl"];
-                                player.BestOffenseLvl = member["BestOffenseLvl"];
-                                player.Faction = member["Faction"];
-                                player.HasControlHubCode = member["HasControlHubCode"];
-                                player.Id = member["Id"];
-                                player.JoinStep = member["JoinStep"];
-                                player.LastSeen = member["LastSeen"];
-                                player.Level = member["Level"];
-                                player.Name = member["Name"];
-                                player.OnlineState = member["OnlineState"];
-                                player.Points = member["Points"];
-                                player.Rank = member["Rank"];
-                                player.Role = member["Role"];
-                                player.RoleName = member["RoleName"];
-                                player.VeteranPointContribution = member["VeteranPointContribution"];
+                            // Get the selected value from the dropdown
+                            let selectedItem = numBasesToScan.getSelection()[0]; // Returns the first selected item (as we expect a single selection)
+                            if (selectedItem) {
+                                let selectedValue = parseInt(selectedItem.getLabel(), 10); // Convert the label (text) to an integer
 
-                                console.log(member);
+                                // Limit the loop to the selectedValue
+                                let limitedMembers = members.slice(0, selectedValue); // Get only the first `selectedValue` members
+                                for (let member of limitedMembers) {
+                                    let player = new Player();
+                                    player.AvgDefenseLvl = member["AvgDefenseLvl"];
+                                    player.AvgOffenseLvl = member["AvgOffenseLvl"];
+                                    player.NumBases = member["Bases"];
+                                    player.BestDefenseLvl = member["BestDefenseLvl"];
+                                    player.BestOffenseLvl = member["BestOffenseLvl"];
+                                    player.Faction = member["Faction"];
+                                    player.HasControlHubCode = member["HasControlHubCode"];
+                                    player.Id = member["Id"];
+                                    player.JoinStep = member["JoinStep"];
+                                    player.LastSeen = member["LastSeen"];
+                                    player.Level = member["Level"];
+                                    player.Name = member["Name"];
+                                    player.OnlineState = member["OnlineState"];
+                                    player.Points = member["Points"];
+                                    player.Rank = member["Rank"];
+                                    player.Role = member["Role"];
+                                    player.RoleName = member["RoleName"];
+                                    player.VeteranPointContribution = member["VeteranPointContribution"];
 
-                                if ( member["Faction"] == 1) {
-                                    this._allianceData.increaseGDI();
-                                } else {
-                                    this._allianceData.increaseNOD();
+                                    if ( member["Faction"] == 1) {
+                                        this._allianceData.increaseGDI();
+                                    } else {
+                                        this._allianceData.increaseNOD();
+                                    }
+                                
+                                    try {
+                                        let publicPlayerData = await getPublicPlayerInfo(player.Name);
+                                        player.PublicPlayerInfoByName = publicPlayerData;
+                                        player.NumBasesDestroyed = publicPlayerData.bd;
+                                        player.PvP = publicPlayerData.bd - publicPlayerData.bde;
+                                        player.PvE = publicPlayerData.bde;
+                                        this._numBases += player.NumBases;
+                                        this._allianceData.numBases += player.NumBases;
+                                    } catch (error) {
+                                        console.error(`Failed to fetch data for player ${player.Name}: ${error}`);
+                                    }
+
+                                    // this._players[member["Name"]] = player;
+                                    this._players.set(member["Name"], player);
+
+                                    // Push the player's data into the tableData array immediately
+                                    this._playerTableData.push([
+                                        player.Rank,
+                                        player.Name,
+                                        player.Faction,
+                                        player.NumBases,
+                                        player.NumBasesDestroyed,
+                                        player.PvP,
+                                        player.PvE,
+                                        player.BestOffenseLvl,
+                                        player.BestDefenseLvl,
+                                        player.TotalTiberium,
+                                        player.TotalCrystal,
+                                        player.TotalPower,
+                                        player.TotalCredits,
+                                    ]);
+
+                                    // Update the player table immediately
+                                    this.drawTables();
+
+                                    // Update the progress bar as each player is processed
+                                    this.updateProgressBar();
                                 }
-                            
-                                try {
-                                    let publicPlayerData = await getPublicPlayerInfo(player.Name);
-                                    player.PublicPlayerInfoByName = publicPlayerData;
-                                    player.NumBasesDestroyed = publicPlayerData.bd;
-                                    player.PvP = publicPlayerData.bd - publicPlayerData.bde;
-                                    player.PvE = publicPlayerData.bde;
-                                    this._numBases += player.NumBases;
-                                    this._allianceData.numBases += player.NumBases;
-                                } catch (error) {
-                                    console.error(`Failed to fetch data for player ${player.Name}: ${error}`);
-                                }
-
-                                this._players[member["Name"]] = player;
-
-                                // Push the player's data into the tableData array immediately
-                                this._playerTableData.push([
-                                    player.Rank,
-                                    player.Name,
-                                    player.Faction,
-                                    player.NumBases,
-                                    player.NumBasesDestroyed,
-                                    player.PvP,
-                                    player.PvE,
-                                    player.BestOffenseLvl,
-                                    player.BestDefenseLvl,
-                                ]);
-
-                                // Update the player table immediately
-                                this.drawTables();
-
-                                // Update the progress bar as each player is processed
-                                this.updateProgressBar();
                             }
                         },
                         
@@ -1115,25 +1323,34 @@
                         //BASE INFO
                         getBases: function() {
                             console.log("Getting base data");
-                        
+
                             // Get the list of player IDs
-                            const playerIds = Object.keys(this._players).filter(id => this._players.hasOwnProperty(id));
-                        
+                            const playerNames = [];
+
+                            for (const [key, player] of this._players.entries()) {
+                                if (player.__Id !== undefined) {
+                                    playerNames.push(player.Name);
+                                }
+                            }
+                            
                             // Start recursive call
-                            this.fetchPlayerDataSequentially(playerIds, 0).then(() => {
+                            this.fetchPlayerDataSequentially(playerNames, 0).then(() => {
                                 console.log("All player data fetched.");
                             });
                         },
                         
                         // Recursive function to fetch player data sequentially using Promises
-                        fetchPlayerDataSequentially: function(playerIds, currentIndex) {
+                        fetchPlayerDataSequentially: function(playerNames, currentIndex) {
                             // If all players are processed, return a resolved Promise
-                            if (currentIndex >= playerIds.length) {
+                            if (currentIndex >= playerNames.length) {
                                 return Promise.resolve();
                             }
 
                             // Get the current player
-                            let player = this._players[playerIds[currentIndex]];
+                            let player = this._players.get(playerNames[currentIndex]);
+
+                            console.log(player);
+                            
                             
                             // Fetch player info
                             return this.getPlayerInfo(player.Name).then(() => {
@@ -1148,17 +1365,18 @@
                         getPlayerInfo: function(playerName) {
                             return new Promise((resolve, reject) => {
                                 try {
-                                    let n = playerName;  // The player name you're querying
-
+                                   
                                     // Ensure the player exists in the players object before adding bases
-                                    if (!this._players[n]) {
-                                        this._players[n] = new Player();
+                                    if (!this._players.get(playerName)) {
+                                        // this._players[n] = new Player();
+                                        this._players.set(playerName, new Player());
+
                                     }
 
                                     // Process bases in sequence
-                                    let baseQueue = this._players[playerName].PublicPlayerInfoByName.c.map((item, index) => {
+                                    let baseQueue = this._players.get(playerName).PublicPlayerInfoByName.c.map((item, index) => {
                                         let base = new Base();
-                                        base.Owner = n;
+                                        base.Owner = playerName;
                                         base.Id = item.i;
                                         base.BaseNum = index;
                                         base.Name = item.n;
@@ -1166,8 +1384,8 @@
                                         base.X = item.x;
                                         base.Y = item.y;
 
-                                        if (this._players.has(n)) {
-                                            this._players.get(n).addBase(base);
+                                        if (this._players.has(playerName)) {
+                                            this._players.get(playerName).addBase(base);
                                         }
 
                                         return base;
@@ -1183,7 +1401,6 @@
                                     
                                         // Call testBase for the current base
                                         testBase(base).then(() => {
-                                            console.log("Adding base data:", base.Name);
                                             this.addBaseData([
                                                 [
                                                     base.Owner, 
@@ -1203,7 +1420,8 @@
                                                     base.CreditContinuous, 
                                                     this.formatTime(base.FactoryRepairTime), 
                                                     this.formatTime(base.AirfieldRepairTime), 
-                                                    this.formatTime(base.BarracksRepairTime), 
+                                                    this.formatTime(base.BarracksRepairTime),
+                                                    this.formatTime(base.WorstRepairTime), 
                                                     base.SupportWeapon, 
                                                     base.SupportWeaponLevel, 
                                                     base.OffensiveLevel, 
@@ -1214,7 +1432,15 @@
                                                 ]
                                             ]);
 
+                                            this._players.get(base.Owner).TotalTiberium += (base.TiberiumPackage + base.TiberiumContinuous);
+                                            this._players.get(base.Owner).TotalCrystal += (base.CrystalPackage + base.CrystalContinuous);
+                                            this._players.get(base.Owner).TotalPower += (base.PowerPackage + base.PowerContinuous);
+                                            this._players.get(base.Owner).TotalCredits += (base.CreditPackage + base.CreditContinuous);  
+                                            
+                                            this._bases = this._bases.concat(base);
+                                            
                                             this.updateBaseProgressBar();
+                                            this.updatePlayerData();
 
                                             // After processing the current base, move to the next one
                                             processBasesSequentially(index + 1);
@@ -1238,7 +1464,6 @@
 
                                             // If base was destroyed, resolve immediately
                                             if (scanBase.get_IsGhostMode()) {
-                                                console.log("Base destroyed.");
                                                 return resolve();  // Continue to the next base
                                             }
 
@@ -1265,16 +1490,17 @@
                                                     base.TiberiumPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Tiberium);
                                                     base.CrystalPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Crystal);
                                                     base.PowerPackage = scanBase.GetResourceBonusGrowPerHour(ClientLib.Base.EResourceType.Power);
-                                                    base.CreditPackage = webfrontend.phe.cnc.gui.util.Numbers.formatNumbers(Math.floor(ClientLib.Base.Resource.GetResourceBonusGrowPerHour(scanBase.get_CityCreditsProduction())));
+                                                    base.CreditPackage = Math.floor(ClientLib.Base.Resource.GetResourceBonusGrowPerHour(scanBase.get_CityCreditsProduction()));
 
                                                     base.TiberiumContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Tiberium, !1, !1);
                                                     base.CrystalContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Crystal, !1, !1);
                                                     base.PowerContinuous = scanBase.GetResourceGrowPerHour(ClientLib.Base.EResourceType.Power, !1, !1);
-                                                    base.CreditContinuous = webfrontend.phe.cnc.gui.util.Numbers.formatNumbers(Math.floor(ClientLib.Base.Resource.GetResourceGrowPerHour(scanBase.get_CityCreditsProduction(), !1)));
+                                                    base.CreditContinuous = Math.floor(ClientLib.Base.Resource.GetResourceGrowPerHour(scanBase.get_CityCreditsProduction(), !1));
 
                                                     base.AirfieldRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Infantry, null);
                                                     base.FactoryRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Vehicle, null);
                                                     base.BarracksRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Aircraft, null);
+                                                    base.worstRepairTime = Math.max(base.FactoryRepairTime, base.AirfieldRepairTime, base.BarracksRepairTime)
                                                     
                                                     base.SupportWeapon = scanBase.get_SupportWeapon() ? scanBase.get_SupportWeapon().dn : "null";
                                                     base.SupportWeaponLevel = scanBase.get_SupportWeapon() ? scanBase.get_SupportData().get_Level() : "null";
@@ -1480,7 +1706,7 @@
                                 tableManager = new myApp.TableManager();
 
                                 // Example: Add new player data
-                                tableManager.addPlayerData([[]]);
+                                // tableManager.addPlayerData([[]]);
 
                                 // // Example: Call the sendBases function (which will add player data and refresh tables)
                                 // tableManager.sendBases();
