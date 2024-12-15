@@ -26,10 +26,14 @@ To fix:
 - [] Is Base holding a POI
 - [x] Get all alliance ranking (that way we can plot it and see if we are improving quicker or slower)
 - [x] Get worst repair time 
-- [] Remove bases from players
+- [x] Remove bases from players
 - [x] Add total tib, cry, etc, variables to the players
-- [] Add button to scan players
+- [x] Add button to scan players
 - [] Fix bug where you can open and close the window (so opening a window doens't create a new instance each time)
+- [] Add a clear data button
+- [x] Scan all bases now (not just one)
+- [x] Max repair time from all bases
+
 
 
 ### Moved

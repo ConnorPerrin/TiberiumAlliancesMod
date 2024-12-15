@@ -353,6 +353,10 @@
                     this.__TotalPower = 0;
                     this.__TotalCredits = 0;
             
+                    this.__MaxFactoryRepairTime = 0;
+                    this.__MaxAirfieldRepairTime = 0;
+                    this.__MaxBarracksRepairTime = 0;
+            
                     this.__PublicPlayerInfoByName = null;
                 }
             
@@ -383,6 +387,10 @@
                 set TotalCrystal(value) { this.__TotalCrystal = value; }
                 set TotalPower(value) { this.__TotalPower = value; }
                 set TotalCredits(value) { this.__TotalCredits = value; }
+            
+                set MaxFactoryRepairTime(value) { this.__MaxFactoryRepairTime = value; }
+                set MaxAirfieldRepairTime(value) { this.__MaxAirfieldRepairTime = value; }
+                set MaxBarracksRepairTime(value) { this.__MaxBarracksRepairTime = value; }
             
                 // Bases-related Setters
                 set Bases(bases) {
@@ -432,8 +440,9 @@
                         TotalCrystal: this.__TotalCrystal,
                         TotalPower: this.__TotalPower,
                         TotalCredits: this.__TotalCredits,
-                        // PublicPlayerInfoByName: this.__PublicPlayerInfoByName,
-                        // Bases: this.__Bases.map(base => base.getData())
+                        MaxFactoryRepairTime: this.__MaxFactoryRepairTime,
+                        MaxAirfieldRepairTime: this.__MaxAirfieldRepairTime,
+                        MaxBarracksRepairTime: this.__MaxBarracksRepairTime,
                     };
                 }
             
@@ -465,6 +474,10 @@
                 get TotalPower() { return this.__TotalPower; }
                 get TotalCredits() { return this.__TotalCredits; }
             
+                get MaxFactoryRepairTime() { return this.__MaxFactoryRepairTime; }
+                get MaxAirfieldRepairTime() { return this.__MaxAirfieldRepairTime; }
+                get MaxBarracksRepairTime() { return this.__MaxBarracksRepairTime; }
+            
                 // Getter for bases
                 get Bases() {
                     return this.__Bases;
@@ -473,7 +486,7 @@
                 FactionToName(val) {
                     return val == 1 ? "GDI" : "NOD";
                 }
-            }            
+            }                       
 
             class AllianceRankingData {
                 constructor(allianceID, allianceName, allianceWon, baseCount, playerCount, rank, top40Score, averageScore, totalScore) {
@@ -526,18 +539,19 @@
             }
 
             // This function defines and creates the necessary classes for the menu buttons
-            function createClasses() {
+            function CnCTracker() {
                 qx.Class.define("myApp.TableManager", {
                     extend: qx.core.Object,
                   
                     construct: function() {
-                      this._createWindow();
-                      this._createTables();
-                      this._createUI();
-                      this._createTabView();
-                      this._getAllianceRanking();
-                      this._getAllianceInfo();
-                    //   this.drawTables(); // Initialize with default entries
+                        console.log("[CnCTracker] construct called");
+                        this._createWindow();
+                        this._createTables();
+                        this._createUI();
+                        this._createTabView();
+                        this._getAllianceRanking();
+                        this._getAllianceInfo();
+                      //   this.drawTables(); // Initialize with default entries
                     },
                   
                     members: {
@@ -598,7 +612,10 @@
                                 "Total Tiberium",
                                 "Total Crystal",
                                 "Total Power",
-                                "Total Credits"
+                                "Total Credits",
+                                "Max Factory Repair Time",
+                                "Max Airfield Repair Time",
+                                "Max Barracks Repair Time",
                             ]);
                             this._playerTable.setTableModel(this._playerTableModel);
                     
@@ -685,6 +702,9 @@
                                         player.TotalCrystal,
                                         player.TotalPower,
                                         player.TotalCredits,
+                                        this.formatTime(player.MaxFactoryRepairTime),
+                                        this.formatTime(player.MaxAirfieldRepairTime),
+                                        this.formatTime(player.MaxBarracksRepairTime)
                                     ]);
                                 });
                             }
@@ -739,7 +759,14 @@
                             sendButton.addListener("execute", function() {
                                 this.sendBases(); // Placeholder function
                             }, this);
-                        
+
+                            let clearDataButton = new qx.ui.form.Button("Clear Data");
+                            clearDataButton.addListener("execute", function() {
+                                if (confirm("Are you sure you want to clear the data?")) {
+                                    this.clearData(); // Placeholder function
+                                }
+                            }, this);
+
                             // Create numBasesToScan menu
                             let numBasesToScanLabel = new qx.ui.basic.Label("Select Range:"); // Label for numBasesToScan
                             numBasesToScan = new qx.ui.form.SelectBox();
@@ -754,6 +781,7 @@
                             topContainer.add(getPlayersButton);
                             topContainer.add(getBasesButton);
                             topContainer.add(sendButton);
+                            topContainer.add(clearDataButton);
                             topContainer.add(numBasesToScanLabel);
                             topContainer.add(numBasesToScan);
                         
@@ -802,7 +830,7 @@
                             });
                             baseProgressBarContainer.add(this._baseProgressBar, { left: 0, top: 0 });
                         
-                            this._baseProgressLabel = new qx.ui.basic.Label("0 / 100");
+                            this._baseProgressLabel = new qx.ui.basic.Label("0 / 0");
                             this._baseProgressLabel.set({
                                 textColor: "white",
                                 alignX: "center",
@@ -1221,7 +1249,26 @@
                             // .then(response => response.json())
                             // .then(result => console.log('Data sent successfully:', result))
                             // .catch(error => console.error('Error sending data:', error));
-                        },                        
+                        },      
+                        
+                        clearData: function() {
+                            this._numPlayersScanned = 0;
+                            this._numbasesScanned = 0;
+                            
+                            this._playerTableData = [];
+                            this._BaseTableData = [];
+    
+                            this._bases = [];
+                            this._players = new Map();          
+
+                            this._progressLabel.setValue(this._numPlayersScanned + " / " + this._numPlayers); // Update progress text
+                            this._baseProgressLabel.setValue("0 / 0");
+                            
+                            this._progressBar.setWidth((this._numPlayersScanned / this._numPlayers) * 300); // Update width of green bar
+                            this._baseProgressBar.setWidth((this._numbasesScanned / this._numBases) * 300); // Update width of green bar
+                            
+                            this.drawTables(); // Redraw the tables
+                        },
                         
                         // PLAYER INFO
                         getPlayers: async function() {
@@ -1308,6 +1355,9 @@
                                         player.TotalCrystal,
                                         player.TotalPower,
                                         player.TotalCredits,
+                                        this.formatTime(player.MaxFactoryRepairTime),
+                                        this.formatTime(player.MaxAirfieldRepairTime),
+                                        this.formatTime(player.MaxBarracksRepairTime),
                                     ]);
 
                                     // Update the player table immediately
@@ -1347,18 +1397,15 @@
                             }
 
                             // Get the current player
-                            let player = this._players.get(playerNames[currentIndex]);
-
-                            console.log(player);
-                            
+                            let player = this._players.get(playerNames[currentIndex]);                            
                             
                             // Fetch player info
                             return this.getPlayerInfo(player.Name).then(() => {
                                 // Once the player info is fetched, call the next one
-                                // return this.fetchPlayerDataSequentially(playerIds, currentIndex + 1);
+                                return this.fetchPlayerDataSequentially(playerNames, currentIndex + 1);
                             }).catch(error => {
                                 console.error("Error fetching player info:", error);
-                                // return this.fetchPlayerDataSequentially(playerIds, currentIndex + 1);  // Continue even on error
+                                return this.fetchPlayerDataSequentially(playerNames, currentIndex + 1);  // Continue even on error
                             });
                         },
 
@@ -1435,8 +1482,11 @@
                                             this._players.get(base.Owner).TotalTiberium += (base.TiberiumPackage + base.TiberiumContinuous);
                                             this._players.get(base.Owner).TotalCrystal += (base.CrystalPackage + base.CrystalContinuous);
                                             this._players.get(base.Owner).TotalPower += (base.PowerPackage + base.PowerContinuous);
-                                            this._players.get(base.Owner).TotalCredits += (base.CreditPackage + base.CreditContinuous);  
-                                            
+                                            this._players.get(base.Owner).TotalCredits += (base.CreditPackage + base.CreditContinuous);
+                                            this._players.get(base.Owner).MaxAirfieldRepairTime = Math.max(this._players.get(base.Owner).MaxAirfieldRepairTime, base.AirfieldRepairTime);
+                                            this._players.get(base.Owner).MaxBarracksRepairTime = Math.max(this._players.get(base.Owner).MaxBarracksRepairTime, base.BarracksRepairTime);
+                                            this._players.get(base.Owner).MaxFactoryRepairTime = Math.max(this._players.get(base.Owner).MaxFactoryRepairTime, base.FactoryRepairTime);
+
                                             this._bases = this._bases.concat(base);
                                             
                                             this.updateBaseProgressBar();
@@ -1500,7 +1550,7 @@
                                                     base.AirfieldRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Infantry, null);
                                                     base.FactoryRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Vehicle, null);
                                                     base.BarracksRepairTime = scanBase.get_CityUnitsData().GetRepairTimeFromEUnitGroup(ClientLib.Data.EUnitGroup.Aircraft, null);
-                                                    base.worstRepairTime = Math.max(base.FactoryRepairTime, base.AirfieldRepairTime, base.BarracksRepairTime)
+                                                    base.WorstRepairTime = Math.max(base.FactoryRepairTime, base.AirfieldRepairTime, base.BarracksRepairTime)
                                                     
                                                     base.SupportWeapon = scanBase.get_SupportWeapon() ? scanBase.get_SupportWeapon().dn : "null";
                                                     base.SupportWeaponLevel = scanBase.get_SupportWeapon() ? scanBase.get_SupportData().get_Level() : "null";
@@ -1686,38 +1736,36 @@
                 if (typeof TABS !== "undefined" && typeof TABS.SETTINGS !== "undefined") {
                     // Add your function to the existing TABS.SETTINGS class
                     TABS.SETTINGS.CnCTrackerFunc = function () {
-                        console.log("[1] Open CnCTracker Window");
-                        // openWindow();
+                        if (!TABS.SETTINGS._tableManagerInstance) {
+                            TABS.SETTINGS._tableManagerInstance = new myApp.TableManager();
+                        } else {
+                            TABS.SETTINGS._tableManagerInstance._win.open(); // Ensure the window is visible
+                        }
                     };
                 } else {
                     // If TABS.SETTINGS is not defined, define it
                     qx.Class.define("TABS.SETTINGS", {
                         type: "static",
                         statics: {
+                            _tableManagerInstance: null, // Static variable to hold the singleton instance
+                
                             _Init: function () {
                                 console.log("INIT function");
                             },
+                
                             CnCTrackerFunc: function () {
                                 console.log("[2] Open CnCTracker Window");
-                                // openWindow();
-                                // Assuming myApp.TableManager has been properly instantiated and the UI is ready
-
-                                // Create an instance of TableManager
-                                tableManager = new myApp.TableManager();
-
-                                // Example: Add new player data
-                                // tableManager.addPlayerData([[]]);
-
-                                // // Example: Call the sendBases function (which will add player data and refresh tables)
-                                // tableManager.sendBases();
-
-                                // // Example: Call the getBases function (which will add base data and refresh tables)
-                                // tableManager.getBases();
-
+                                if (!this._tableManagerInstance) {
+                                    console.log("Creating a new instance of TableManager");
+                                    this._tableManagerInstance = new myApp.TableManager();
+                                } else {
+                                    console.log("Reusing the existing instance of TableManager");
+                                    this._tableManagerInstance._win.open(); // Ensure the window is visible
+                                }
                             }
                         }
                     });
-                }
+                }                
 
                 // Define resources (e.g., images) used in the menu
                 qx.Class.define("TABS.RES.IMG", {
@@ -2147,7 +2195,7 @@
                         if (app !== null && app.initDone === true && ClientLib.Data.MainData.GetInstance().get_Player().get_Id() !== 0 && ClientLib.Data.MainData.GetInstance().get_Server().get_WorldId() !== 0) {
                             try {
                                 console.time("loaded in");
-                                createClasses(); // Call the function to create the classes and buttons
+                                CnCTracker(); // Call the function to create the classes and buttons
                                 TABS.getInstance(); // Initialize the TABS instance
                                 console.group("Tiberium Alliances Menu Button");
                                 console.timeEnd("loaded in");
