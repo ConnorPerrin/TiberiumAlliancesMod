@@ -649,8 +649,40 @@
                                 "Base Level",
                                 "Number of Buildings",
                                 "Number of Offensive Units",
+                                "Base Id"
                             ]);                            
                             this._baseTable.setTableModel(this._baseTableModel);
+
+
+
+                            this._playerTable.addListener("cellTap", function (cellEvent) {
+                                var row = cellEvent.getRow(); // Get the row index
+                            
+                                // Get the table model
+                                var tableModel = this._playerTable.getTableModel();
+                            
+                                // Get the row data
+                                var rowData = tableModel.getRowData(row);
+                            
+                                webfrontend.gui.info.PlayerInfoWindow.getInstance().openWithPlayerName(rowData[1]);
+                            }, this);
+
+                            this._baseTable.addListener("cellTap", function (cellEvent) {
+                                var row = cellEvent.getRow(); // Get the row index
+                            
+                                // Get the table model
+                                var tableModel = this._baseTable.getTableModel();
+                            
+                                // Get the row data
+                                var rowData = tableModel.getRowData(row);
+
+                                webfrontend.gui.info.BaseInfoWindow.getInstance().openWithBaseId(rowData[26]);
+                            }, this);
+
+
+
+                            
+                                              
                         },
                     
                         // Draw both tables with data
@@ -1449,7 +1481,7 @@
                                         // Call testBase for the current base
                                         testBase(base).then(() => {
                                             this.addBaseData([
-                                                [
+                                                [   
                                                     base.Owner, 
                                                     base.Name + " ("+base.BaseNum+")",
                                                     base.Score, 
@@ -1475,7 +1507,8 @@
                                                     base.DefensiveLevel, 
                                                     base.BaseLevel,
                                                     base.NumBuildings,
-                                                    base.NumUnitLimitOffense
+                                                    base.NumUnitLimitOffense,
+                                                    base.Id
                                                 ]
                                             ]);
 
@@ -1532,6 +1565,7 @@
                                                     console.log("Tiberium check failed after max retries, skipping base.");
                                                     return resolve();  // Skip to the next base if retry limit reached
                                                 } else {
+                                                    base.Id = scanBase.get_Id();
                                                     base.Faction = scanBase.get_CityFaction();
                                                     base.TiberiumMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Tiberium);
                                                     base.CrystalMaxStorage = scanBase.GetResourceMaxStorage(ClientLib.Base.EResourceType.Crystal);
